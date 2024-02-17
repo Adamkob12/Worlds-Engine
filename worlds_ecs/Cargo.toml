@@ -1,0 +1,8 @@
+[package]
+name = "worlds_ecs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy_ptr = "0.12"
+primitive-types = "0.12"
