@@ -121,19 +121,16 @@ impl Components {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use worlds_derive::Component;
 
+    #[derive(Component)]
     struct A;
+
+    #[derive(Component)]
     struct B;
+
+    #[derive(Component)]
     struct C;
-
-    impl Data for A {}
-    impl Component for A {}
-
-    impl Data for B {}
-    impl Component for B {}
-
-    impl Data for C {}
-    impl Component for C {}
 
     #[test]
     fn test_components() {
