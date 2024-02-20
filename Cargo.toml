@@ -7,4 +7,4 @@ edition = "2021"
 
 [workspace]
 resolver = "2"
-members = ["worlds_ecs"]
+members = ["worlds_core"]

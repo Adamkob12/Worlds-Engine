@@ -165,15 +165,15 @@ mod tests {
         );
         assert_eq!(
             components.get_component_info::<A>().unwrap().name(),
-            "worlds_ecs::component::tests::A"
+            "worlds_core::component::tests::A"
         );
         assert_eq!(
             components.get_component_info::<B>().unwrap().name(),
-            "worlds_ecs::component::tests::B"
+            "worlds_core::component::tests::B"
         );
         assert_eq!(
             components.get_component_info::<C>().unwrap().name(),
-            "worlds_ecs::component::tests::C"
+            "worlds_core::component::tests::C"
         );
     }
 }
