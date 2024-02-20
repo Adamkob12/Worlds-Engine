@@ -5,7 +5,7 @@ pub mod data;
 /// It exposes the API for the ECS, it is the bedrock of the engine.
 pub struct World {
     _data: data::WorldData,
-    _components: crate::component::Components,
+    _components: crate::component::ComponentFactory,
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

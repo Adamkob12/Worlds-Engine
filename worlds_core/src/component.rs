@@ -24,14 +24,14 @@ impl ComponentId {
 
 /// A data structure to keep track of all the components in the world, and their information.
 #[derive(Default)]
-pub struct Components {
+pub struct ComponentFactory {
     /// Map the [`TypeId`] of each [`Component`] to its [`ComponentId`]
     type_map: TypeIdMap<ComponentId>,
     /// The [`DataInfo`] for each component, indexed by [`ComponentId`]
     components: Vec<DataInfo>,
 }
 
-impl Components {
+impl ComponentFactory {
     /// Register a new component from a generic type.
     /// If this component is already registered, this method will return
     /// the [`ComponentId`] of the previously registered component.
@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_components() {
-        let mut components = Components::default();
+        let mut components = ComponentFactory::default();
         assert!(!components.is_registered::<A>());
         assert!(!components.is_registered::<B>());
         assert!(!components.is_registered::<C>());
