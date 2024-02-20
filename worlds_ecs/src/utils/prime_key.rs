@@ -23,6 +23,7 @@ pub const MAX_COMPONENTS: usize = {
 
 impl_id_struct!(PrimeArchKey, PrimeNum, pub);
 
+#[allow(unused)]
 impl PrimeArchKey {
     const PRIME_TABLE: [usize; MAX_COMPONENTS] = PRIME_NUMBERS;
 

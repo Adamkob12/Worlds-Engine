@@ -48,6 +48,11 @@ impl DataInfo {
         self.layout
     }
 
+    /// Get this [`Data`]'s name
+    pub fn name(&self) -> &'static str {
+        self.name
+    }
+
     /// Create a raw and unchekced [`DataInfo`].
     pub fn new(
         name: &'static str,

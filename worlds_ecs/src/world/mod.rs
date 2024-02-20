@@ -4,7 +4,7 @@ pub mod data;
 /// This type stores everything that is offered by this crate. It is the main type of the ECS.
 /// It exposes the API for the ECS, it is the bedrock of the engine.
 pub struct World {
-    data: data::WorldData,
+    _data: data::WorldData,
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
