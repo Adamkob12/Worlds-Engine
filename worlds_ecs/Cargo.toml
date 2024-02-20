@@ -6,3 +6,7 @@ edition = "2021"
 [dependencies]
 bevy_ptr = "0.12"
 primitive-types = "0.12"
+
+[features]
+default = ["many_components"]
+many_components = []

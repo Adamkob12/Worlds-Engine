@@ -12,11 +12,13 @@ macro_rules! impl_id_struct {
         #[allow(unused)]
         impl $name {
             /// Create a new [`Self`] from a raw id.
+            #[inline]
             $vis fn new(id: $id_type) -> $name {
                 Self(id)
             }
 
             /// Get the underlying id.
+            #[inline]
             $vis fn id(&self) -> $id_type {
                 self.0
             }

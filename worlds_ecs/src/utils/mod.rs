@@ -1,4 +1,5 @@
 pub(crate) mod macros;
+pub(crate) mod prime_key;
 
 /// A specialized hashmap type with Key of [`TypeId`]
 pub type TypeIdMap<V> =
