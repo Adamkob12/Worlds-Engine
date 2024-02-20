@@ -1,5 +1,3 @@
-use std::any::TypeId;
-
 use crate::{
     impl_id_struct,
     utils::{
@@ -8,6 +6,7 @@ use crate::{
     },
     world::data::{Data, DataInfo},
 };
+use std::any::TypeId;
 
 /// The trait that represents a component.
 pub trait Component: Data {}
@@ -139,19 +138,15 @@ mod tests {
     #[test]
     fn test_components() {
         let mut components = Components::default();
-
         assert!(!components.is_registered::<A>());
         assert!(!components.is_registered::<B>());
         assert!(!components.is_registered::<C>());
-
         components.register_component::<A>();
         components.register_component::<B>();
         components.register_component_unchecked::<C>();
-
         assert!(components.is_registered::<A>());
         assert!(components.is_registered::<B>());
         assert!(components.is_registered::<C>());
-
         assert_eq!(components.get_component_id::<A>().unwrap().id(), 0);
         assert_eq!(components.get_component_id::<B>().unwrap().id(), 1);
         assert_eq!(components.get_component_id::<C>().unwrap().id(), 2);
