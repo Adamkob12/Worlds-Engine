@@ -92,7 +92,8 @@ impl EntityFactory {
 
     /// The the [`EntityMeta`] of an entity.
     pub fn get_entity_meta(&self, entity: EntityId) -> Option<&EntityMeta> {
-        self.entity_metas.get(entity.id() as usize)
+        self.verify_generation(entity)
+            .then(|| &self.entity_metas[entity.id() as usize])
     }
 
     /// Returns how many entities are there in the world.

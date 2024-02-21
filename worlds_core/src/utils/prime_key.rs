@@ -39,6 +39,14 @@ impl PrimeArchKey {
         }
         Some(Self(counter))
     }
+
+    pub fn is_sub_archetype(&self, other: PrimeArchKey) -> bool {
+        self.0 % other.0 == U256::zero()
+    }
+
+    pub fn is_matching_archetype(&self, other: PrimeArchKey) -> bool {
+        self.0 == other.0
+    }
 }
 
 #[cfg(not(many_components))]
