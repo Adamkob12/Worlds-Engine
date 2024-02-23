@@ -1,5 +1,3 @@
-/// Module responsible for Archetypes in the World.
-pub mod archetype;
 /// Module responsible for any data that can be stored in the World.
 pub mod data;
 /// Module responsible for storage in the World.

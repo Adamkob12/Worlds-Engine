@@ -10,8 +10,14 @@ type PrimeNum = U256;
 #[cfg(many_components)]
 type PrimeNum = U512;
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PrimeArchKey(PrimeNum);
+
+impl Default for PrimeArchKey {
+    fn default() -> Self {
+        Self(U256::one())
+    }
+}
 
 pub const MAX_COMPONENTS: usize = {
     if cfg!(many_components) {
@@ -40,12 +46,34 @@ impl PrimeArchKey {
         Some(Self(counter))
     }
 
+    /// Return `true` if the other [`PrimeArchKey`] represents a sub-archetype of the archetype
+    /// this [`PrimeArchKey`] represents. else return `false.
+    /// An archetype `A` is a sub-archetype of a different archetype `B` if and only if every component
+    /// in `A` is also in `B`.
     pub fn is_sub_archetype(&self, other: PrimeArchKey) -> bool {
         self.0 % other.0 == U256::zero()
     }
 
+    /// Return `true` if both this Key and the other key represent the same archetype. Which can
+    /// only be true if and only if the keys are equal. else return `false.
     pub fn is_matching_archetype(&self, other: PrimeArchKey) -> bool {
         self.0 == other.0
+    }
+
+    pub fn merge_with(&mut self, other: PrimeArchKey) {
+        self.0 *= other.0
+    }
+
+    pub fn squared(self) -> PrimeArchKey {
+        PrimeArchKey(self.0.pow(U256::from(2)))
+    }
+
+    /// Conversion to u64 with overflow checking
+    ///
+    /// # Panics
+    /// Panics if the number is larger than u64::max_value().
+    pub fn as_u64(&self) -> u64 {
+        self.0.as_u64()
     }
 }
 

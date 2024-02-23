@@ -12,12 +12,12 @@ use std::any::TypeId;
 pub trait Component: Data {}
 
 /// A unique identifer for a [`Component`] in the [`World`](crate::world::World)
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ComponentId(usize);
 impl_id_struct!(ComponentId);
 
 impl ComponentId {
-    pub(crate) fn _prime_key(&self) -> PrimeArchKey {
+    pub(crate) fn prime_key(&self) -> PrimeArchKey {
         PrimeArchKey::component_key(*self)
     }
 }
