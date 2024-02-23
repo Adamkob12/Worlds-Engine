@@ -1,5 +1,9 @@
+/// Module responsible for Archetypes in the World.
+pub mod archetype;
 /// Module responsible for any data that can be stored in the World.
 pub mod data;
+/// Module responsible for storage in the World.
+pub mod storage;
 
 /// This type stores everything that is offered by this crate. It is the main type of the ECS.
 /// It exposes the API for the ECS, it is the bedrock of the engine.
