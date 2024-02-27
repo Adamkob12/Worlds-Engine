@@ -3,6 +3,8 @@
 
 /// Module responsible for anything to do archetypes.
 pub mod archetype;
+/// Module responsible for anything to do with bundles.
+pub mod bundle;
 /// Module responsible for anything to do with components.
 pub mod component;
 /// Module responsible for anything to do with entities.

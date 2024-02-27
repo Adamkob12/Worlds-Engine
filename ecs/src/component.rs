@@ -1,3 +1,4 @@
+use crate::prelude::storage::blob_vec::BlobVec;
 use crate::{
     impl_id_struct,
     utils::{
@@ -12,7 +13,8 @@ use std::any::TypeId;
 pub trait Component: Data {}
 
 /// A unique identifer for a [`Component`] in the [`World`](crate::world::World)
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
 pub struct ComponentId(usize);
 impl_id_struct!(ComponentId);
 
@@ -38,7 +40,10 @@ impl ComponentFactory {
     /// If the component couldn't be registered for some reason, return `None`
     /// (the reason is most likely that the maximum amount of registered components has been reached.)
     pub fn register_component<C: Component>(&mut self) -> Option<ComponentId> {
-        self.register_component_from_data(TypeId::of::<C>(), DataInfo::deafult_for::<C>())
+        // SAFETY: the `DataInfo` provided indeed matches the type.
+        unsafe {
+            self.register_component_from_data(TypeId::of::<C>(), DataInfo::deafult_for::<C>())
+        }
     }
 
     /// Register a new component from raw data.
@@ -46,7 +51,10 @@ impl ComponentFactory {
     /// the [`ComponentId`] of the previously registered component.
     /// If the component couldn't be registered for some reason, return `None`
     /// (the reason is most likely that the maximum amount of registered components has been reached.)
-    pub fn register_component_from_data(
+    ///
+    /// # Safety
+    /// The caller must ensure that the [`DataInfo`] does indeed match the type that is represented by the [`TypeId`]
+    pub unsafe fn register_component_from_data(
         &mut self,
         type_id: TypeId,
         data_info: DataInfo,
@@ -61,7 +69,10 @@ impl ComponentFactory {
     /// Register a new component like [`Self::register_component_from_data`] without checking whether this
     /// component is already registered, and whether the [`maximum amount of components`](MAX_COMPONENTS) has been reached.
     /// This method is not unsafe, but using it without caution may result in difficult to find bugs and / or wasted memory.
-    pub fn register_component_from_data_unchecked(
+    ///
+    /// # Safety
+    /// The caller must ensure that the [`DataInfo`] does indeed match the type that is represented by the [`TypeId`]
+    pub unsafe fn register_component_from_data_unchecked(
         &mut self,
         type_id: TypeId,
         data_info: DataInfo,
@@ -76,7 +87,13 @@ impl ComponentFactory {
     /// component is already registered, and whether the [`maximum amount of components`](MAX_COMPONENTS) has been reached.
     /// This method is not unsafe, but using it without caution may result in difficult to find bugs and / or wasted memory.
     pub fn register_component_unchecked<C: Component>(&mut self) -> ComponentId {
-        self.register_component_from_data_unchecked(TypeId::of::<C>(), DataInfo::deafult_for::<C>())
+        // SAFETY: the `DataInfo` provided indeed matches the type.
+        unsafe {
+            self.register_component_from_data_unchecked(
+                TypeId::of::<C>(),
+                DataInfo::deafult_for::<C>(),
+            )
+        }
     }
 
     /// Get the [`DataInfo`] of a component
@@ -115,6 +132,19 @@ impl ComponentFactory {
     /// Returns `true` if a component with this [`TypeId`] is registered. `false` if not.
     pub fn is_type_registered(&self, type_id: TypeId) -> bool {
         self.type_map.contains_key(&type_id)
+    }
+
+    /// Generate a type-erased data structure that can store values with the type of the component
+    /// that's represented by the [`ComponentId`]
+    /// # Safety
+    ///
+    /// The caller must ensure that the [`DataInfo`] that is stored for this component matces the actual
+    /// memory layout of this component, and that `DataInfo::drop_fn()` is safe to call with an [`OwningPtr`]  to the component.
+    pub unsafe fn new_component_storage(&self, comp_id: ComponentId) -> Option<BlobVec> {
+        Some(BlobVec::new_for_data(
+            self.get_component_info_from_component_id(comp_id)?,
+            1,
+        ))
     }
 }
 

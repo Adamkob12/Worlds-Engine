@@ -5,6 +5,9 @@ use crate::{
     utils::prime_key::PrimeArchKey,
 };
 
+/// Maximum amount of components per archetype, This is also the maximum amount of components per entity.
+pub const MAX_COMPS_PER_ARCH: usize = 30;
+
 /// Information representing the information of a [`Archetype`] in the [`World`].
 #[derive(Default, Debug)]
 pub struct ArchetypeInfo {
@@ -45,7 +48,7 @@ impl ArchetypeInfo {
 
 /// An archetype is a unique set of components.
 // TODO: Expand on documentation with examples and explanations.
-pub trait Archetype {
+pub trait Archetype: Sized {
     /// Get the [`ArchetypeInfo`] of this archetype for a matching [`World`].
     fn arch_info(components: &ComponentFactory) -> Option<ArchetypeInfo>;
 }
@@ -76,10 +79,6 @@ macro_rules! impl_archetype {
 }
 
 all_tuples!(impl_archetype, 0, 15, A);
-
-/// A data structure to keep track of all the archetypes in the world, their information,
-/// and where is their data stored.
-pub struct ArchetypeFactory {}
 
 #[cfg(test)]
 mod tests {
