@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use bevy_ptr::{OwningPtr, Ptr};
+use bevy_ptr::{OwningPtr, Ptr, PtrMut};
 use smallvec::SmallVec;
 
 use crate::{
     archetype::{Archetype, MAX_COMPS_PER_ARCH},
-    prelude::{Bundle, Component, ComponentFactory, ComponentId},
+    prelude::{Bundle, ComponentFactory, ComponentId},
     storage::blob_vec::BlobVec,
     utils::prime_key::PrimeArchKey,
 };
@@ -32,7 +32,7 @@ impl ArchStorage {
         let mut comp_indexes = HashMap::with_capacity(MAX_COMPS_PER_ARCH);
         for (i, comp_id) in components.into_iter().enumerate() {
             // SAFETY: the safety is dependant on whether each of the archetype's components'
-            // `DataInfo` that is stored internally in the `ComponentFactory` matches their type.
+            // [`DataInfo`] that is stored internally in the `ComponentFactory` matches their type.
             comp_storage.push(unsafe { comp_factory.new_component_storage(*comp_id)? });
             comp_indexes.insert(*comp_id, i);
         }
@@ -44,10 +44,15 @@ impl ArchStorage {
         })
     }
 
+    /// The amount of bundles stored in [`Self`]
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
     /// Store a [`Bundle`] of components with a matching archetype in this storage.
     /// # Returns
-    ///     - `None`: If the archetypes aren't matching, or one of the components wasn't registered.
-    ///     - `Some(usize)`: The index (a.k.a row) where the components of the bundle are stored.
+    ///     - [`None`]: If the archetypes aren't matching, or one of the components wasn't registered.
+    ///     - [`Some(usize)`]: The index (a.k.a row) where the components of the bundle are stored.
     pub fn store_bundle<B: Bundle + Archetype>(
         &mut self,
         comp_factory: &ComponentFactory,
@@ -73,7 +78,7 @@ impl ArchStorage {
             self.store_component_unchecked(comp_id, raw_comp)
         });
         self.len += 1;
-        self.len
+        self.len - 1
     }
 
     /// Store a single component in its matching [`BlobVec`].
@@ -84,22 +89,149 @@ impl ArchStorage {
     ///     - The raw data (`raw_comp`) matches the component's `Layout` (the same safety requirements
     ///       that are needed when using [`BlobVec::push`])
     ///     - The component is part of the archetypes (Components of this type are stored in [`Self`])
+    #[inline]
     unsafe fn store_component_unchecked(&mut self, comp_id: ComponentId, raw_comp: OwningPtr<'_>) {
         self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()].push(raw_comp)
     }
 
-    /// Query this storage for a bundle of components.
-    pub fn query<A: Archetype>(&self, index: usize) -> Option<A> {
-        todo!()
+    /// Get a type-erased reference to a pointer, from its index and [`ComponentId`].
+    pub fn get_component(&self, index: usize, comp_id: ComponentId) -> Option<Ptr<'_>> {
+        (index < self.len).then_some(
+            // SAFETY: We ensured that `index < self.len`.
+            unsafe { self.comp_storage[*self.comp_indexes.get(&comp_id)?].get_unchecked(index) },
+        )
     }
 
     /// Get a type-erased reference to a pointer, from its index and [`ComponentId`].
-    pub fn get_component_by_id(&self, index: usize, comp_id: ComponentId) -> Option<Ptr<'_>> {
-        todo!()
+    ///
+    /// # Safety
+    /// The caller must ensure that the component matching the given [`ComponentId`] is indeed
+    /// stored in [`Self`], and that `index < self.len()`.
+    #[inline]
+    pub unsafe fn get_component_unchecked(&self, index: usize, comp_id: ComponentId) -> Ptr<'_> {
+        self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()].get_unchecked(index)
     }
 
-    /// Get a reference to a single component, from its index.
-    pub fn get_component<C: Component>(&self, index: usize) -> Option<&C> {
-        todo!()
+    /// Get a type-erased mutable reference to a pointer, from its index and [`ComponentId`].
+    pub fn get_component_mut(&mut self, index: usize, comp_id: ComponentId) -> Option<PtrMut<'_>> {
+        (index < self.len).then_some(
+            // SAFETY: We ensured that `index < self.len`.
+            unsafe {
+                self.comp_storage[*self.comp_indexes.get(&comp_id)?].get_mut_unchecked(index)
+            },
+        )
+    }
+
+    /// Get a type-erased mutable reference to a pointer, from its index and [`ComponentId`].
+    ///
+    /// # Safety
+    /// The caller must ensure that the component matching the given [`ComponentId`] is indeed
+    /// stored in [`Self`], and that `index < self.len()`.
+    #[inline]
+    pub unsafe fn get_component_mut_unchecked(
+        &mut self,
+        index: usize,
+        comp_id: ComponentId,
+    ) -> PtrMut<'_> {
+        self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()]
+            .get_mut_unchecked(index)
+    }
+}
+
+// #[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+
+    use super::ArchStorage;
+
+    #[derive(Component)]
+    struct A(usize);
+
+    #[derive(Component)]
+    struct B([usize; 2]);
+
+    #[derive(Component)]
+    struct C([u8; 3]);
+
+    // #[test]
+    fn test_component_storage() {
+        let mut comp_factory = ComponentFactory::default();
+
+        comp_factory.register_component::<A>(); // will have `ComponentId` 0
+        comp_factory.register_component::<B>(); // will have `ComponentId` 1
+        comp_factory.register_component::<C>(); // will have `ComponentId` 2
+
+        let mut abc_storage = ArchStorage::new::<(A, B, C)>(&comp_factory).unwrap();
+        // let mut ab_storage = ArchStorage::new::<(A, B)>(&comp_factory).unwrap();
+        // let mut bc_storage = ArchStorage::new::<(B, C)>(&comp_factory).unwrap();
+        // let mut ac_storage = ArchStorage::new::<(A, C)>(&comp_factory).unwrap();
+        // let mut a_storage = ArchStorage::new::<A>(&comp_factory).unwrap();
+        // let mut b_storage = ArchStorage::new::<B>(&comp_factory).unwrap();
+        // let mut c_storage = ArchStorage::new::<C>(&comp_factory).unwrap();
+
+        assert_eq!(abc_storage.len(), 0);
+
+        assert_eq!(
+            abc_storage
+                .store_bundle(&comp_factory, (A(0), B([1; 2]), C([255; 3])))
+                .unwrap(),
+            0
+        );
+        assert_eq!(
+            abc_storage
+                .store_bundle(&comp_factory, (A(1), B([10; 2]), C([255; 3])))
+                .unwrap(),
+            1
+        );
+        assert_eq!(
+            abc_storage
+                .store_bundle(&comp_factory, (A(2), B([100; 2]), C([255; 3])))
+                .unwrap(),
+            2
+        );
+        assert_eq!(
+            abc_storage
+                .store_bundle(&comp_factory, (A(3), B([1000; 2]), C([255; 3])))
+                .unwrap(),
+            3
+        );
+
+        assert_eq!(abc_storage.len(), 4);
+
+        unsafe {
+            assert_eq!(
+                abc_storage
+                    .get_component(0, ComponentId::new(0))
+                    .unwrap()
+                    .deref::<A>()
+                    .0,
+                0
+            );
+
+            assert_eq!(
+                abc_storage
+                    .get_component(1, ComponentId::new(0))
+                    .unwrap()
+                    .deref::<A>()
+                    .0,
+                1
+            );
+
+            assert_eq!(
+                abc_storage
+                    .get_component_unchecked(2, ComponentId::new(0))
+                    .deref::<A>()
+                    .0,
+                2
+            );
+
+            assert_eq!(
+                abc_storage
+                    .get_component_unchecked(3, ComponentId::new(0))
+                    .deref::<A>()
+                    .0,
+                3
+            );
+        }
     }
 }

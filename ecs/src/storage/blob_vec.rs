@@ -233,7 +233,7 @@ impl BlobVec {
     #[inline]
     pub unsafe fn initialize_unchecked(&mut self, index: usize, value: OwningPtr<'_>) {
         debug_assert!(index < self.len());
-        let ptr = self.get_unchecked_mut(index);
+        let ptr = self.get_mut_unchecked(index);
         std::ptr::copy_nonoverlapping::<u8>(value.as_ptr(), ptr.as_ptr(), self.item_layout.size());
     }
 
@@ -251,7 +251,7 @@ impl BlobVec {
 
         // Pointer to the value in the vector that will get replaced.
         // SAFETY: The caller ensures that `index` fits in this vector.
-        let destination = NonNull::from(self.get_unchecked_mut(index));
+        let destination = NonNull::from(self.get_mut_unchecked(index));
         let source = value.as_ptr();
 
         if let Some(drop) = self.drop {
@@ -336,8 +336,8 @@ impl BlobVec {
         let size = self.item_layout.size();
         if index != new_len {
             std::ptr::swap_nonoverlapping::<u8>(
-                self.get_unchecked_mut(index).as_ptr(),
-                self.get_unchecked_mut(new_len).as_ptr(),
+                self.get_mut_unchecked(index).as_ptr(),
+                self.get_mut_unchecked(new_len).as_ptr(),
                 size,
             );
         }
@@ -360,8 +360,8 @@ impl BlobVec {
     #[inline]
     pub unsafe fn swap_remove_unchecked(&mut self, index: usize, ptr: PtrMut<'_>) {
         debug_assert!(index < self.len());
-        let last = self.get_unchecked_mut(self.len - 1).as_ptr();
-        let target = self.get_unchecked_mut(index).as_ptr();
+        let last = self.get_mut_unchecked(self.len - 1).as_ptr();
+        let target = self.get_mut_unchecked(index).as_ptr();
         // Copy the item at the index into the provided ptr
         std::ptr::copy_nonoverlapping::<u8>(target, ptr.as_ptr(), self.item_layout.size());
         // Recompress the storage by moving the previous last element into the
@@ -409,7 +409,7 @@ impl BlobVec {
     /// # Safety
     /// It is the caller's responsibility to ensure that `index < self.len()`.
     #[inline]
-    pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> PtrMut<'_> {
+    pub unsafe fn get_mut_unchecked(&mut self, index: usize) -> PtrMut<'_> {
         debug_assert!(index < self.len());
         let size = self.item_layout.size();
         // SAFETY:
