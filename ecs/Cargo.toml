@@ -7,6 +7,7 @@ edition = "2021"
 bevy_ptr = "0.12"
 primitive-types = "0.12"
 worlds_derive = { path = "../worlds_derive" }
+smallvec = "1.13"
 
 [features]
 default = ["many_components"]

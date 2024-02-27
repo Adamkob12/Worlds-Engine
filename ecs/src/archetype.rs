@@ -27,14 +27,14 @@ impl ArchetypeInfo {
     }
 
     /// Get the [`Component`]s that make up this [`Archetype`].
-    pub fn components(&self) -> &[ComponentId] {
+    pub fn component_ids(&self) -> &[ComponentId] {
         &self.component_ids
     }
 
     /// Verify that there aren't duplicate components in this archetype
     /// Return `true` if there are duplicate components in this [`Archetype`]. else `false`.
     pub fn check_for_duplicates(&self) -> bool {
-        for comp_id in self.components() {
+        for comp_id in self.component_ids() {
             if self
                 .prime_key()
                 .is_sub_archetype(comp_id.prime_key().squared())
@@ -48,12 +48,15 @@ impl ArchetypeInfo {
 
 /// An archetype is a unique set of components.
 // TODO: Expand on documentation with examples and explanations.
-pub trait Archetype: Sized {
+///
+/// # Safety:
+/// Do not implement this trait for your types. If this trait is misimplemented.
+pub unsafe trait Archetype: Sized {
     /// Get the [`ArchetypeInfo`] of this archetype for a matching [`World`].
     fn arch_info(components: &ComponentFactory) -> Option<ArchetypeInfo>;
 }
 
-impl<C> Archetype for C
+unsafe impl<C> Archetype for C
 where
     C: Component,
 {
@@ -67,7 +70,7 @@ where
 
 macro_rules! impl_archetype {
     ($($name:ident),*) => {
-        impl<$($name: Archetype),*> Archetype for ($($name,)*) {
+        unsafe impl<$($name: Archetype),*> Archetype for ($($name,)*) {
             #[allow(non_snake_case, unused)]
             fn arch_info(components: &ComponentFactory) -> Option<ArchetypeInfo> {
                 let mut arch_info = ArchetypeInfo::default();
@@ -171,14 +174,14 @@ mod tests {
         comp_factory.register_component::<C>();
 
         let arch_info = <(A, B, C) as Archetype>::arch_info(&comp_factory).unwrap();
-        let comps = arch_info.components();
+        let comps = arch_info.component_ids();
         assert_eq!(comps[0], ComponentId::new(0));
         assert_eq!(comps[1], ComponentId::new(1));
         assert_eq!(comps[2], ComponentId::new(2));
         assert!(!arch_info.check_for_duplicates());
 
         let arch_info = <(A, B, C, C) as Archetype>::arch_info(&comp_factory).unwrap();
-        let comps = arch_info.components();
+        let comps = arch_info.component_ids();
         assert_eq!(comps[0], ComponentId::new(0));
         assert_eq!(comps[1], ComponentId::new(1));
         assert_eq!(comps[2], ComponentId::new(2));

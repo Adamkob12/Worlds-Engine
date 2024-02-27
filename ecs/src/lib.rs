@@ -9,6 +9,8 @@ pub mod bundle;
 pub mod component;
 /// Module responsible for anything to do with entities.
 pub mod entity;
+/// Module responsible for anything to do with queries.
+pub mod query;
 /// Module responsible for anything to do with storage.
 pub mod storage;
 /// Module responsible for anything to do with the world.

@@ -5,8 +5,9 @@ use crate::prelude::{Component, ComponentFactory, ComponentId};
 
 /// A bundle of components.
 pub trait Bundle {
-    /// Iterate over the type-erased components, for storage.
-    fn get_raw_components(
+    /// This method calls `f` on all of the components in the bundle. This could, for example,
+    ///  be used in conjunction with [`Vec::push`] to collect all the components into a [`Vec`].
+    fn raw_components_scope(
         self,
         comp_factory: &ComponentFactory,
         f: &mut impl FnMut(ComponentId, OwningPtr<'_>),
@@ -14,7 +15,7 @@ pub trait Bundle {
 }
 
 impl<C: Component> Bundle for C {
-    fn get_raw_components(
+    fn raw_components_scope(
         self,
         comp_factory: &ComponentFactory,
         f: &mut impl FnMut(ComponentId, OwningPtr<'_>),
@@ -33,9 +34,9 @@ macro_rules! impl_bundle_for_tuple {
     ($($name:ident),*) => {
         impl<$($name: Bundle),*> Bundle for ($($name,)*) {
             #[allow(non_snake_case, unused)]
-            fn get_raw_components(self, comp_factory: &ComponentFactory, f: &mut impl FnMut(ComponentId, OwningPtr<'_>)) {
+            fn raw_components_scope(self, comp_factory: &ComponentFactory, f: &mut impl FnMut(ComponentId, OwningPtr<'_>)) {
                 let ($($name,)*) = self;
-                $($name.get_raw_components(comp_factory, f);)*
+                $($name.raw_components_scope(comp_factory, f);)*
             }
         }
     };
@@ -72,17 +73,17 @@ mod tests {
         };
 
         let mut storage = vec![blob_vec_a, blob_vec_b];
-        <(A, B) as Bundle>::get_raw_components(
+        <(A, B) as Bundle>::raw_components_scope(
             (A(33), B(-11, -99, [-456; 20])),
             &comp_factory,
             &mut |comp_id, raw_comp| unsafe { storage[comp_id.id()].push(raw_comp) },
         );
-        <(A, B) as Bundle>::get_raw_components(
+        <(A, B) as Bundle>::raw_components_scope(
             (A(66), B(-22, -99, [-56; 20])),
             &comp_factory,
             &mut |comp_id, raw_comp| unsafe { storage[comp_id.id()].push(raw_comp) },
         );
-        <(A, B) as Bundle>::get_raw_components(
+        <(A, B) as Bundle>::raw_components_scope(
             (A(99), B(-33, -99, [-4; 20])),
             &comp_factory,
             &mut |comp_id, raw_comp| unsafe { storage[comp_id.id()].push(raw_comp) },
