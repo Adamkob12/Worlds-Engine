@@ -30,7 +30,7 @@ impl ArchStorage {
         let components = arch_info.component_ids();
         let mut comp_storage = SmallVec::new();
         let mut comp_indexes = HashMap::with_capacity(MAX_COMPS_PER_ARCH);
-        for (i, comp_id) in components.into_iter().enumerate() {
+        for (i, comp_id) in components.iter().enumerate() {
             // SAFETY: the safety is dependant on whether each of the archetype's components'
             // [`DataInfo`] that is stored internally in the `ComponentFactory` matches their type.
             comp_storage.push(unsafe { comp_factory.new_component_storage(*comp_id)? });
@@ -47,6 +47,11 @@ impl ArchStorage {
     /// The amount of bundles stored in [`Self`]
     pub fn len(&self) -> usize {
         self.len
+    }
+
+    /// Return `true` if there is nothing stored here. else `false`.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Store a [`Bundle`] of components with a matching archetype in this storage.
@@ -89,7 +94,6 @@ impl ArchStorage {
     ///     - The raw data (`raw_comp`) matches the component's `Layout` (the same safety requirements
     ///       that are needed when using [`BlobVec::push`])
     ///     - The component is part of the archetypes (Components of this type are stored in [`Self`])
-    #[inline]
     unsafe fn store_component_unchecked(&mut self, comp_id: ComponentId, raw_comp: OwningPtr<'_>) {
         self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()].push(raw_comp)
     }
@@ -107,7 +111,6 @@ impl ArchStorage {
     /// # Safety
     /// The caller must ensure that the component matching the given [`ComponentId`] is indeed
     /// stored in [`Self`], and that `index < self.len()`.
-    #[inline]
     pub unsafe fn get_component_unchecked(&self, index: usize, comp_id: ComponentId) -> Ptr<'_> {
         self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()].get_unchecked(index)
     }
@@ -127,7 +130,6 @@ impl ArchStorage {
     /// # Safety
     /// The caller must ensure that the component matching the given [`ComponentId`] is indeed
     /// stored in [`Self`], and that `index < self.len()`.
-    #[inline]
     pub unsafe fn get_component_mut_unchecked(
         &mut self,
         index: usize,
@@ -138,7 +140,7 @@ impl ArchStorage {
     }
 }
 
-// #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use crate::prelude::*;
 
@@ -153,7 +155,7 @@ mod tests {
     #[derive(Component)]
     struct C([u8; 3]);
 
-    // #[test]
+    #[test]
     fn test_component_storage() {
         let mut comp_factory = ComponentFactory::default();
 

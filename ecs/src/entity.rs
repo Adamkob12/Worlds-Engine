@@ -52,8 +52,8 @@ impl EntityFactory {
     fn alloc_new_entity(&mut self) -> EntityId {
         self.generations.push(0);
         self.entity_metas.push(EntityMeta {});
-        let id = EntityId::new(self.entities - 1);
-        id
+        
+        EntityId::new(self.entities - 1)
     }
 
     /// Produce a new entity, and return its [`EntityId`]. Note this is different from [`Self::alloc_new_entity`]

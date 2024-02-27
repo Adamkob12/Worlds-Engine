@@ -49,7 +49,7 @@ impl ArchetypeInfo {
 /// An archetype is a unique set of components.
 // TODO: Expand on documentation with examples and explanations.
 ///
-/// # Safety:
+/// # Safety
 /// Do not implement this trait for your types. If this trait is misimplemented.
 pub unsafe trait Archetype: Sized {
     /// Get the [`ArchetypeInfo`] of this archetype for a matching [`World`].
