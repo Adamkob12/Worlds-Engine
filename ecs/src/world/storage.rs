@@ -8,6 +8,7 @@ use crate::{
 };
 
 /// A data-structure that stores the data of an archetype. Specifically, it's components.
+#[allow(unused)]
 pub struct ArchStorage {
     /// By indexing this list using [`ComponentId::id`], we get the index to the component's storage
     /// in the `comp_storage` field.

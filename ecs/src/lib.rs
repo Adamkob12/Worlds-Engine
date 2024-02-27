@@ -18,6 +18,7 @@ pub(crate) mod utils;
 
 /// The common and useful exports of this crate.
 pub mod prelude {
+    pub use super::bundle::Bundle;
     pub use super::component;
     pub use super::component::*;
     pub use super::storage;
