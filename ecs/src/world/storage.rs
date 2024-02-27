@@ -55,9 +55,6 @@ impl ArchStorage {
     }
 
     /// Store a [`Bundle`] of components with a matching archetype in this storage.
-    /// # Returns
-    ///     - [`None`]: If the archetypes aren't matching, or one of the components wasn't registered.
-    ///     - [`Some(usize)`]: The index (a.k.a row) where the components of the bundle are stored.
     pub fn store_bundle<B: Bundle + Archetype>(
         &mut self,
         comp_factory: &ComponentFactory,
@@ -200,6 +197,12 @@ mod tests {
 
         assert_eq!(abc_storage.len(), 4);
 
+        // ~~~~~~~~~~~~~~~~~~~~~~
+        //
+        // TEST READING COMPONENTS
+        //
+        // ~~~~~~~~~~~~~~~~~~~~~~
+
         unsafe {
             assert_eq!(
                 abc_storage
@@ -209,7 +212,6 @@ mod tests {
                     .0,
                 0
             );
-
             assert_eq!(
                 abc_storage
                     .get_component(1, ComponentId::new(0))
@@ -218,7 +220,6 @@ mod tests {
                     .0,
                 1
             );
-
             assert_eq!(
                 abc_storage
                     .get_component_unchecked(2, ComponentId::new(0))
@@ -226,7 +227,6 @@ mod tests {
                     .0,
                 2
             );
-
             assert_eq!(
                 abc_storage
                     .get_component_unchecked(3, ComponentId::new(0))
@@ -235,5 +235,69 @@ mod tests {
                 3
             );
         }
+
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        //
+        // TEST WRITING / CHANGING COMPONENTS
+        //
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        unsafe {
+            abc_storage
+                .get_component_mut(0, ComponentId::new(0))
+                .unwrap()
+                .deref_mut::<A>()
+                .0 *= 10;
+            abc_storage
+                .get_component_mut(1, ComponentId::new(0))
+                .unwrap()
+                .deref_mut::<A>()
+                .0 *= 10;
+            abc_storage
+                .get_component_mut(2, ComponentId::new(0))
+                .unwrap()
+                .deref_mut::<A>()
+                .0 *= 10;
+            abc_storage
+                .get_component_mut(3, ComponentId::new(0))
+                .unwrap()
+                .deref_mut::<A>()
+                .0 *= 10;
+        }
+
+        unsafe {
+            assert_eq!(
+                abc_storage
+                    .get_component(0, ComponentId::new(0))
+                    .unwrap()
+                    .deref::<A>()
+                    .0,
+                0
+            );
+            assert_eq!(
+                abc_storage
+                    .get_component(1, ComponentId::new(0))
+                    .unwrap()
+                    .deref::<A>()
+                    .0,
+                10
+            );
+            assert_eq!(
+                abc_storage
+                    .get_component_unchecked(2, ComponentId::new(0))
+                    .deref::<A>()
+                    .0,
+                20
+            );
+            assert_eq!(
+                abc_storage
+                    .get_component_unchecked(3, ComponentId::new(0))
+                    .deref::<A>()
+                    .0,
+                30
+            );
+        }
+
+        //
     }
 }
