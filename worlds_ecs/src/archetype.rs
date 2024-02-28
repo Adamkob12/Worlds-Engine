@@ -1,9 +1,8 @@
-use worlds_derive::all_tuples;
-
 use crate::{
     component::{Component, ComponentFactory, ComponentId},
     utils::prime_key::PrimeArchKey,
 };
+use worlds_derive::all_tuples;
 
 /// Maximum amount of components per archetype, This is also the maximum amount of components per entity.
 pub const MAX_COMPS_PER_ARCH: usize = 30;
@@ -85,16 +84,13 @@ all_tuples!(impl_archetype, 0, 15, A);
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
-
     use super::Archetype;
+    use crate::prelude::*;
 
     #[derive(Component)]
     struct A;
-
     #[derive(Component)]
     struct B;
-
     #[derive(Component)]
     struct C;
 

@@ -1,5 +1,5 @@
 [package]
-name = "worlds_core"
+name = "worlds_ecs"
 version = "0.1.0"
 edition = "2021"
 

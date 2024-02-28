@@ -8,6 +8,7 @@ pub mod storage;
 pub struct World {
     _data: data::WorldData,
     _components: crate::component::ComponentFactory,
+    _entities: crate::entity::EntityFactory,
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

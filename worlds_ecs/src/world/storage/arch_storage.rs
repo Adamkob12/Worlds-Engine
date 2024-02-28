@@ -1,14 +1,17 @@
-use std::collections::HashMap;
-
-use bevy_ptr::{OwningPtr, Ptr, PtrMut};
-use smallvec::SmallVec;
-
 use crate::{
     archetype::{Archetype, MAX_COMPS_PER_ARCH},
     prelude::{Bundle, ComponentFactory, ComponentId},
     storage::blob_vec::BlobVec,
     utils::prime_key::PrimeArchKey,
 };
+use bevy_ptr::{OwningPtr, Ptr, PtrMut};
+use smallvec::SmallVec;
+use std::collections::HashMap;
+
+/// Used to index an [`ArchStorage`]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct ArchStorageIndex(usize);
 
 /// A data-structure that stores the data of an archetype (a.k.a [`Bundle`]).
 pub struct ArchStorage {
@@ -59,7 +62,7 @@ impl ArchStorage {
         &mut self,
         comp_factory: &ComponentFactory,
         bundle: B,
-    ) -> Option<usize> {
+    ) -> Option<ArchStorageIndex> {
         B::arch_info(comp_factory)?
             .prime_key()
             .is_matching_archetype(self.prime_key)
@@ -75,12 +78,12 @@ impl ArchStorage {
         &mut self,
         comp_factory: &ComponentFactory,
         bundle: B,
-    ) -> usize {
+    ) -> ArchStorageIndex {
         bundle.raw_components_scope(comp_factory, &mut |comp_id, raw_comp| {
             self.store_component_unchecked(comp_id, raw_comp)
         });
         self.len += 1;
-        self.len - 1
+        ArchStorageIndex(self.len - 1)
     }
 
     /// Store a single component in its matching [`BlobVec`].
@@ -96,10 +99,10 @@ impl ArchStorage {
     }
 
     /// Get a type-erased reference to a pointer, from its index and [`ComponentId`].
-    pub fn get_component(&self, index: usize, comp_id: ComponentId) -> Option<Ptr<'_>> {
-        (index < self.len).then_some(
+    pub fn get_component(&self, index: ArchStorageIndex, comp_id: ComponentId) -> Option<Ptr<'_>> {
+        (index.0 < self.len).then_some(
             // SAFETY: We ensured that `index < self.len`.
-            unsafe { self.comp_storage[*self.comp_indexes.get(&comp_id)?].get_unchecked(index) },
+            unsafe { self.comp_storage[*self.comp_indexes.get(&comp_id)?].get_unchecked(index.0) },
         )
     }
 
@@ -108,16 +111,25 @@ impl ArchStorage {
     /// # Safety
     /// The caller must ensure that the component matching the given [`ComponentId`] is indeed
     /// stored in [`Self`], and that `index < self.len()`.
-    pub unsafe fn get_component_unchecked(&self, index: usize, comp_id: ComponentId) -> Ptr<'_> {
-        self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()].get_unchecked(index)
+    pub unsafe fn get_component_unchecked(
+        &self,
+        index: ArchStorageIndex,
+        comp_id: ComponentId,
+    ) -> Ptr<'_> {
+        self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()]
+            .get_unchecked(index.0)
     }
 
     /// Get a type-erased mutable reference to a pointer, from its index and [`ComponentId`].
-    pub fn get_component_mut(&mut self, index: usize, comp_id: ComponentId) -> Option<PtrMut<'_>> {
-        (index < self.len).then_some(
+    pub fn get_component_mut(
+        &mut self,
+        index: ArchStorageIndex,
+        comp_id: ComponentId,
+    ) -> Option<PtrMut<'_>> {
+        (index.0 < self.len).then_some(
             // SAFETY: We ensured that `index < self.len`.
             unsafe {
-                self.comp_storage[*self.comp_indexes.get(&comp_id)?].get_mut_unchecked(index)
+                self.comp_storage[*self.comp_indexes.get(&comp_id)?].get_mut_unchecked(index.0)
             },
         )
     }
@@ -129,26 +141,24 @@ impl ArchStorage {
     /// stored in [`Self`], and that `index < self.len()`.
     pub unsafe fn get_component_mut_unchecked(
         &mut self,
-        index: usize,
+        index: ArchStorageIndex,
         comp_id: ComponentId,
     ) -> PtrMut<'_> {
         self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()]
-            .get_mut_unchecked(index)
+            .get_mut_unchecked(index.0)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
-
     use super::ArchStorage;
+    use super::ArchStorageIndex;
+    use crate::prelude::*;
 
     #[derive(Component)]
     struct A(usize);
-
     #[derive(Component)]
     struct B([usize; 2]);
-
     #[derive(Component)]
     struct C([u8; 3]);
 
@@ -173,25 +183,29 @@ mod tests {
         assert_eq!(
             abc_storage
                 .store_bundle(&comp_factory, (A(0), B([1; 2]), C([255; 3])))
-                .unwrap(),
+                .unwrap()
+                .0,
             0
         );
         assert_eq!(
             abc_storage
                 .store_bundle(&comp_factory, (A(1), B([10; 2]), C([255; 3])))
-                .unwrap(),
+                .unwrap()
+                .0,
             1
         );
         assert_eq!(
             abc_storage
                 .store_bundle(&comp_factory, (A(2), B([100; 2]), C([255; 3])))
-                .unwrap(),
+                .unwrap()
+                .0,
             2
         );
         assert_eq!(
             abc_storage
                 .store_bundle(&comp_factory, (A(3), B([1000; 2]), C([255; 3])))
-                .unwrap(),
+                .unwrap()
+                .0,
             3
         );
 
@@ -206,7 +220,7 @@ mod tests {
         unsafe {
             assert_eq!(
                 abc_storage
-                    .get_component(0, ComponentId::new(0))
+                    .get_component(ArchStorageIndex(0), ComponentId::new(0))
                     .unwrap()
                     .deref::<A>()
                     .0,
@@ -214,7 +228,7 @@ mod tests {
             );
             assert_eq!(
                 abc_storage
-                    .get_component(1, ComponentId::new(0))
+                    .get_component(ArchStorageIndex(1), ComponentId::new(0))
                     .unwrap()
                     .deref::<A>()
                     .0,
@@ -222,14 +236,14 @@ mod tests {
             );
             assert_eq!(
                 abc_storage
-                    .get_component_unchecked(2, ComponentId::new(0))
+                    .get_component_unchecked(ArchStorageIndex(2), ComponentId::new(0))
                     .deref::<A>()
                     .0,
                 2
             );
             assert_eq!(
                 abc_storage
-                    .get_component_unchecked(3, ComponentId::new(0))
+                    .get_component_unchecked(ArchStorageIndex(3), ComponentId::new(0))
                     .deref::<A>()
                     .0,
                 3
@@ -244,22 +258,22 @@ mod tests {
 
         unsafe {
             abc_storage
-                .get_component_mut(0, ComponentId::new(0))
+                .get_component_mut(ArchStorageIndex(0), ComponentId::new(0))
                 .unwrap()
                 .deref_mut::<A>()
                 .0 *= 10;
             abc_storage
-                .get_component_mut(1, ComponentId::new(0))
+                .get_component_mut(ArchStorageIndex(1), ComponentId::new(0))
                 .unwrap()
                 .deref_mut::<A>()
                 .0 *= 10;
             abc_storage
-                .get_component_mut(2, ComponentId::new(0))
+                .get_component_mut(ArchStorageIndex(2), ComponentId::new(0))
                 .unwrap()
                 .deref_mut::<A>()
                 .0 *= 10;
             abc_storage
-                .get_component_mut(3, ComponentId::new(0))
+                .get_component_mut(ArchStorageIndex(3), ComponentId::new(0))
                 .unwrap()
                 .deref_mut::<A>()
                 .0 *= 10;
@@ -268,7 +282,7 @@ mod tests {
         unsafe {
             assert_eq!(
                 abc_storage
-                    .get_component(0, ComponentId::new(0))
+                    .get_component(ArchStorageIndex(0), ComponentId::new(0))
                     .unwrap()
                     .deref::<A>()
                     .0,
@@ -276,7 +290,7 @@ mod tests {
             );
             assert_eq!(
                 abc_storage
-                    .get_component(1, ComponentId::new(0))
+                    .get_component(ArchStorageIndex(1), ComponentId::new(0))
                     .unwrap()
                     .deref::<A>()
                     .0,
@@ -284,14 +298,14 @@ mod tests {
             );
             assert_eq!(
                 abc_storage
-                    .get_component_unchecked(2, ComponentId::new(0))
+                    .get_component_unchecked(ArchStorageIndex(2), ComponentId::new(0))
                     .deref::<A>()
                     .0,
                 20
             );
             assert_eq!(
                 abc_storage
-                    .get_component_unchecked(3, ComponentId::new(0))
+                    .get_component_unchecked(ArchStorageIndex(3), ComponentId::new(0))
                     .deref::<A>()
                     .0,
                 30
