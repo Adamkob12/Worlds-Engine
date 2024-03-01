@@ -6,7 +6,7 @@ use crate::{
 };
 use bevy_ptr::{OwningPtr, Ptr, PtrMut};
 use smallvec::SmallVec;
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData, ops::Deref};
 
 /// Used to index an [`ArchStorage`]
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -147,6 +147,65 @@ impl ArchStorage {
             .get_mut_unchecked(index.0)
     }
 }
+
+// /// Shared access to an [`ArchStorage`]
+// pub struct ReadArchStorage<'a, A: Archetype> {
+//     arch_storage: &'a ArchStorage,
+//     _marker: PhantomData<A>,
+// }
+
+// /// Exclusive access to an [`ArchStorage`]
+// pub struct WriteArchStorage<'a, A: Archetype> {
+//     arch_storage: &'a mut ArchStorage,
+//     _marker: PhantomData<A>,
+// }
+
+// impl<'a, A: Archetype> ReadArchStorage<'a, A> {
+//     /// Get shared access to the [`Archetype`] stored at the index.
+//     pub fn get(&self, index: ArchStorageIndex) -> Option<&'a A> {
+//         todo!()
+//     }
+
+//     /// Get shared access to the [`Archetype`] stored at the index, without checking the index is in bounds.
+//     /// # Safety
+//     /// The caller must ensure that the index [`ArchStorageIndex`] is valid and within the bounds of this storage.
+//     pub unsafe fn get_unchecked(&self, index: ArchStorageIndex) -> &'a A {
+//         todo!()
+//     }
+// }
+
+// impl<'a, A: Archetype> WriteArchStorage<'a, A> {
+//     /// Get exclusive access to the [`Archetype`] stored at the index.
+//     pub fn get_mut(&self, index: ArchStorageIndex) -> Option<&'a mut A> {
+//         todo!()
+//     }
+
+//     /// Get exclusive access to the [`Archetype`] stored at the index, without checking the index is in bounds.
+//     /// # Safety
+//     /// The caller must ensure that the index [`ArchStorageIndex`] is valid and within the bounds of this storage.
+//     pub unsafe fn get_mut_unchecked(&self, index: ArchStorageIndex) -> &'a mut A {
+//         todo!()
+//     }
+
+//     /// Store a bundle of components with the same archetype in this storage.
+//     pub unsafe fn push(&self, bundle: A) -> Option<ArchStorageIndex>
+//     where
+//         A: Bundle,
+//     {
+//         todo!()
+//     }
+// }
+
+// impl<'a, A: Archetype> Deref for WriteArchStorage<'a, A> {
+//     type Target = ReadArchStorage<'a, A>;
+
+//     fn deref(&self) -> &Self::Target {
+//         ReadArchStorage {
+//             arch_storage: &*self.arch_storage,
+//             _marker: PhantomData,
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
