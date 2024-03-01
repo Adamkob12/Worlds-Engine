@@ -14,7 +14,32 @@ pub struct ArchStorages {
     pkeys: Vec<PrimeArchKey>,
 }
 
+/// Identifies an [`ArchStorage`] in the [`StorageFactory`]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct ArchStorageId(usize);
+
 impl ArchStorages {
+    /// Get a shared reference to an [`ArchStorage`] from its [`ArchStorageId`]
+    pub fn get_storage(&self, id: ArchStorageId) -> Option<&ArchStorage> {
+        self.storages.get(id.0)
+    }
+
+    /// Get an exclusive reference to an [`ArchStorage`] from its [`ArchStorageId`]
+    pub fn get_storage_mut(&mut self, id: ArchStorageId) -> Option<&mut ArchStorage> {
+        self.storages.get_mut(id.0)
+    }
+
+    /// Get a shared reference to an [`ArchStorage`] from its [`ArchStorageId`], without doing any bounds checking
+    pub unsafe fn get_storage_unchecked(&self, id: ArchStorageId) -> &ArchStorage {
+        self.storages.get_unchecked(id.0)
+    }
+
+    /// Get an exclusive reference to an [`ArchStorage`] from its [`ArchStorageId`], without doing any bounds checking
+    pub unsafe fn get_storage_mut_unchecked(&mut self, id: ArchStorageId) -> &mut ArchStorage {
+        self.storages.get_unchecked_mut(id.0)
+    }
+
     /// Get the [`ArchStorage`]s that stores archetypes with the exact same [`PrimeArchKey`]
     pub fn get_storage_with_exact_archetype(&self, pkey: PrimeArchKey) -> Option<&ArchStorage> {
         self.pkeys
@@ -80,7 +105,7 @@ impl ArchStorages {
     pub fn store_new_archetype_checked<A: Archetype>(
         &mut self,
         comp_factory: &ComponentFactory,
-    ) -> Option<PrimeArchKey> {
+    ) -> Option<ArchStorageId> {
         (A::arch_info(comp_factory).is_some() && self.is_archetype_stored::<A>(comp_factory))
             // SAFETY: We checked that the components are registered, and that archetype isn't being stored already.
             .then_some(unsafe { self.store_new_archetype_unchecked::<A>(comp_factory) })
@@ -95,11 +120,11 @@ impl ArchStorages {
     pub unsafe fn store_new_archetype_unchecked<A: Archetype>(
         &mut self,
         comp_factory: &ComponentFactory,
-    ) -> PrimeArchKey {
+    ) -> ArchStorageId {
         self.storages
             .push(ArchStorage::new::<A>(comp_factory).unwrap_unchecked());
         let pkey = A::prime_key(comp_factory).unwrap_unchecked();
         self.pkeys.push(pkey);
-        pkey
+        ArchStorageId(self.pkeys.len() - 1)
     }
 }

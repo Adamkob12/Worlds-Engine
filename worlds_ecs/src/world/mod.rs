@@ -15,7 +15,7 @@ pub mod storage;
 pub struct World {
     pub(crate) _data: data::WorldData,
     pub(crate) _components: crate::component::ComponentFactory,
-    pub(crate) _entities: crate::entity::EntityFactory,
+    pub(crate) entities: crate::entity::EntityFactory,
     pub(crate) _storages: storage::storages::StorageFactory,
 }
 
@@ -38,7 +38,9 @@ impl World {}
 impl World {
     /// Spawn a new entity with a bundle of components.
     pub fn spawn<B: Bundle + Archetype>(&mut self) -> EntityId {
-        todo!()
+        let entity_id = self.entities.new_entity();
+        todo!();
+        entity_id
     }
 
     /// Get a reference to a [`Component`] of an entity.
