@@ -30,6 +30,7 @@ impl EntityId {
 }
 
 /// A data structure to keep track of all the entities in the world, and their information.
+// TODO: Better docs
 #[derive(Default)]
 pub struct EntityFactory {
     /// Indexed by an [`EntityId::id`], this list keeps track of the current generation of each entity.
@@ -52,7 +53,7 @@ impl EntityFactory {
     fn alloc_new_entity(&mut self) -> EntityId {
         self.generations.push(0);
         self.entity_metas.push(EntityMeta {});
-        
+
         EntityId::new(self.entities - 1)
     }
 

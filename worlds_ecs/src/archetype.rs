@@ -54,7 +54,7 @@ pub unsafe trait Archetype: Sized {
     /// Get the [`ArchetypeInfo`] of this archetype for a matching [`World`] (whose component info is stored in [`ComponentFactory`])
     fn arch_info(comp_factory: &ComponentFactory) -> Option<ArchetypeInfo>;
     /// Get the [`PrimeArchKey`] of this archetype for a matching [`World`] (whose component info is stored in [`ComponentFactory`])
-    fn prime_arch_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey>;
+    fn prime_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey>;
 }
 
 unsafe impl<C> Archetype for C
@@ -70,7 +70,7 @@ where
             })
     }
 
-    fn prime_arch_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey> {
+    fn prime_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey> {
         comp_factory
             .get_component_id::<C>()
             .map(|cid| cid.prime_key())
@@ -88,9 +88,9 @@ macro_rules! impl_archetype {
             }
 
             #[allow(unused_mut, unused_variables)]
-            fn prime_arch_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey> {
+            fn prime_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey> {
                 let mut pkey = PrimeArchKey::IDENTITY;
-                $(pkey.merge_with($name::prime_arch_key(comp_factory)?);)*
+                $(pkey.merge_with($name::prime_key(comp_factory)?);)*
                 Some(pkey)
             }
         }

@@ -63,8 +63,7 @@ impl ArchStorage {
         comp_factory: &ComponentFactory,
         bundle: B,
     ) -> Option<ArchStorageIndex> {
-        B::arch_info(comp_factory)?
-            .prime_key()
+        B::prime_key(comp_factory)?
             .is_exact_archetype(self.prime_key)
             // SAFETY: We checked that the archetypes are matching
             .then_some(unsafe { self.store_bundle_unchecked(comp_factory, bundle) })

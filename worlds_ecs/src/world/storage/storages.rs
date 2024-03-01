@@ -3,6 +3,7 @@ use crate::{archetype::Archetype, prelude::ComponentFactory, utils::prime_key::P
 use super::arch_storage::ArchStorage;
 
 /// A data structure to keep track of all the storages in the world, and their information.
+// TODO: Better docs
 pub struct StorageFactory {
     pub(crate) arch_storages: ArchStorages,
 }
@@ -65,7 +66,7 @@ impl ArchStorages {
 
     /// Checks if this archetype is stored here.
     pub fn is_archetype_stored<A: Archetype>(&self, comp_factory: &ComponentFactory) -> bool {
-        A::prime_arch_key(comp_factory).map_or(false, |pkey1| {
+        A::prime_key(comp_factory).map_or(false, |pkey1| {
             self.pkeys
                 .iter()
                 .find(|pkey2| pkey2.is_exact_archetype(pkey1))
@@ -97,7 +98,7 @@ impl ArchStorages {
     ) -> PrimeArchKey {
         self.storages
             .push(ArchStorage::new::<A>(comp_factory).unwrap_unchecked());
-        let pkey = A::prime_arch_key(comp_factory).unwrap_unchecked();
+        let pkey = A::prime_key(comp_factory).unwrap_unchecked();
         self.pkeys.push(pkey);
         pkey
     }

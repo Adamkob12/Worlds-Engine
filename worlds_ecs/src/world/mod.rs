@@ -5,10 +5,12 @@ pub mod storage;
 
 /// This type stores everything that is offered by this crate. It is the main type of the ECS.
 /// It exposes the API for the ECS, it is the bedrock of the engine.
+// TODO: Better docs
 pub struct World {
     _data: data::WorldData,
     _components: crate::component::ComponentFactory,
     _entities: crate::entity::EntityFactory,
+    _storages: storage::storages::StorageFactory,
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

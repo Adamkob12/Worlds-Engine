@@ -25,6 +25,7 @@ impl ComponentId {
 }
 
 /// A data structure to keep track of all the components in the world, and their information.
+// TODO: Better docs
 #[derive(Default)]
 pub struct ComponentFactory {
     /// Map the [`TypeId`] of each [`Component`] to its [`ComponentId`]
