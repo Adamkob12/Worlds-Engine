@@ -32,6 +32,7 @@ impl_id_struct!(PrimeArchKey, PrimeNum, pub);
 #[allow(unused)]
 impl PrimeArchKey {
     const PRIME_TABLE: [usize; MAX_COMPONENTS] = PRIME_NUMBERS;
+    pub const IDENTITY: PrimeArchKey = PrimeArchKey(U256::one());
 
     #[inline(always)]
     pub fn component_key(comp_id: ComponentId) -> Self {
@@ -56,7 +57,7 @@ impl PrimeArchKey {
 
     /// Return `true` if both this Key and the other key represent the same archetype. Which can
     /// only be true if and only if the keys are equal. else return `false.
-    pub fn is_matching_archetype(&self, other: PrimeArchKey) -> bool {
+    pub fn is_exact_archetype(&self, other: PrimeArchKey) -> bool {
         self.0 == other.0
     }
 

@@ -51,19 +51,29 @@ impl ArchetypeInfo {
 /// # Safety
 /// Do not implement this trait for your types. If this trait is misimplemented.
 pub unsafe trait Archetype: Sized {
-    /// Get the [`ArchetypeInfo`] of this archetype for a matching [`World`].
-    fn arch_info(components: &ComponentFactory) -> Option<ArchetypeInfo>;
+    /// Get the [`ArchetypeInfo`] of this archetype for a matching [`World`] (whose component info is stored in [`ComponentFactory`])
+    fn arch_info(comp_factory: &ComponentFactory) -> Option<ArchetypeInfo>;
+    /// Get the [`PrimeArchKey`] of this archetype for a matching [`World`] (whose component info is stored in [`ComponentFactory`])
+    fn prime_arch_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey>;
 }
 
 unsafe impl<C> Archetype for C
 where
     C: Component,
 {
-    fn arch_info(components: &ComponentFactory) -> Option<ArchetypeInfo> {
-        components.get_component_id::<C>().map(|id| ArchetypeInfo {
-            component_ids: vec![id],
-            prime_key: id.prime_key(),
-        })
+    fn arch_info(comp_factory: &ComponentFactory) -> Option<ArchetypeInfo> {
+        comp_factory
+            .get_component_id::<C>()
+            .map(|id| ArchetypeInfo {
+                component_ids: vec![id],
+                prime_key: id.prime_key(),
+            })
+    }
+
+    fn prime_arch_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey> {
+        comp_factory
+            .get_component_id::<C>()
+            .map(|cid| cid.prime_key())
     }
 }
 
@@ -75,6 +85,13 @@ macro_rules! impl_archetype {
                 let mut arch_info = ArchetypeInfo::default();
                 $(arch_info.merge_with($name::arch_info(components)?);)*
                 Some(arch_info)
+            }
+
+            #[allow(unused_mut, unused_variables)]
+            fn prime_arch_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey> {
+                let mut pkey = PrimeArchKey::IDENTITY;
+                $(pkey.merge_with($name::prime_arch_key(comp_factory)?);)*
+                Some(pkey)
             }
         }
     };
