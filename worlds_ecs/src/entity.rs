@@ -1,3 +1,4 @@
+use crate::world::storage::{arch_storage::ArchStorageIndex, storages::ArchStorageId};
 use std::collections::VecDeque;
 
 /// A unique identifer for an entity in the in the [`World`](crate::world::World)
@@ -50,9 +51,9 @@ impl EntityFactory {
     /// Allocate a new entity, and return its [`EntityId`]. Note this is different from [`Self::new_entity`]
     /// because this will always *allocate* a new entity, whereas [`Self::new_entity`] could also pull from
     /// the depspawned entity queue. Panics if the maximum amount of entities has been reached (2^32).
-    fn alloc_new_entity(&mut self) -> EntityId {
+    fn alloc_new_entity(&mut self, entity_meta: EntityMeta) -> EntityId {
         self.generations.push(0);
-        self.entity_metas.push(EntityMeta {});
+        self.entity_metas.push(entity_meta);
 
         EntityId::new(self.entities - 1)
     }
@@ -60,7 +61,7 @@ impl EntityFactory {
     /// Produce a new entity, and return its [`EntityId`]. Note this is different from [`Self::alloc_new_entity`]
     /// & [`Self::new_entity`] because this will only use the [`EntityId`] of an entity that was removed.
     /// Panics if the maximum amount of entities has been reached (2^32).
-    fn revive_removed_entity(&mut self) -> Option<EntityId> {
+    fn revive_removed_entity(&mut self, entity_meta: EntityMeta) -> Option<EntityId> {
         let id = self.queued_entitys.pop_front()?;
         Some(id.with_generation(self.generations[id.id() as usize]))
     }
@@ -68,10 +69,10 @@ impl EntityFactory {
     /// Produce a new entity, and return its [`EntityId`]. Note this is different from [`Self::alloc_new_entity`]
     /// because this can create reuse a removed entity's [`EntityId`], whereas [`Self::alloc_new_entity`]
     /// will always allocate a new entity. Panics if the maximum amount of entities has been reached (2^32).
-    pub fn new_entity(&mut self) -> EntityId {
+    pub fn new_entity(&mut self, entity_meta: EntityMeta) -> EntityId {
         self.entities += 1;
-        self.revive_removed_entity()
-            .unwrap_or(self.alloc_new_entity())
+        self.revive_removed_entity(entity_meta)
+            .unwrap_or(self.alloc_new_entity(entity_meta))
     }
 
     /// Verify the generation of this entity, meaning, verify that it hasn't been removed.
@@ -97,6 +98,11 @@ impl EntityFactory {
             .then(|| &self.entity_metas[entity.id() as usize])
     }
 
+    /// Set the [`EntityMeta`] of an entity.
+    pub fn set_entity_meta(&mut self, entity_meta: EntityMeta, entity: EntityId) {
+        self.entity_metas[entity.id() as usize] = entity_meta
+    }
+
     /// Returns how many entities are there in the world.
     pub fn entities(&self) -> u32 {
         self.entities
@@ -104,8 +110,18 @@ impl EntityFactory {
 }
 
 /// Meta-data of an entity.
-#[derive(Default)]
-pub struct EntityMeta {}
+#[derive(Clone, Copy)]
+pub struct EntityMeta {
+    pub(crate) archetype_storage_id: ArchStorageId,
+    pub(crate) archetype_storage_index: ArchStorageIndex,
+}
+
+impl EntityMeta {
+    pub(crate) const PLACEHOLDER: EntityMeta = EntityMeta {
+        archetype_storage_id: ArchStorageId(usize::MAX),
+        archetype_storage_index: ArchStorageIndex(usize::MAX),
+    };
+}
 
 #[cfg(test)]
 mod tests {
@@ -116,7 +132,7 @@ mod tests {
         let mut entity_factory = EntityFactory::default();
         let mut entities = Vec::new();
         (0..100).for_each(|_| {
-            entities.push(entity_factory.new_entity());
+            entities.push(entity_factory.new_entity(EntityMeta::PLACEHOLDER));
         });
 
         for entity in &entities {
@@ -138,7 +154,7 @@ mod tests {
         assert_eq!(entity_factory.entities(), 50);
 
         (0..50).for_each(|_| {
-            entity_factory.new_entity();
+            entity_factory.new_entity(EntityMeta::PLACEHOLDER);
         });
 
         assert_eq!(entity_factory.entities(), 100);

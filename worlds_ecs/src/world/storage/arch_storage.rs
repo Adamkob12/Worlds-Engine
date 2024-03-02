@@ -11,7 +11,7 @@ use std::{collections::HashMap, marker::PhantomData, ops::Deref};
 /// Used to index an [`ArchStorage`]
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct ArchStorageIndex(usize);
+pub struct ArchStorageIndex(pub(crate) usize);
 
 /// A data-structure that stores the data of an archetype (a.k.a [`Bundle`]).
 pub struct ArchStorage {
@@ -37,7 +37,10 @@ impl ArchStorage {
             // SAFETY: the safety is dependant on whether each of the archetype's components'
             // [`DataInfo`] that is stored internally in the `ComponentFactory` matches their type.
             comp_storage.push(unsafe { comp_factory.new_component_storage(*comp_id)? });
-            comp_indexes.insert(*comp_id, i);
+            assert!(
+                comp_indexes.insert(*comp_id, i).is_none(),
+                "Cannot store archetypes with duplicate components."
+            );
         }
         Some(ArchStorage {
             comp_indexes,

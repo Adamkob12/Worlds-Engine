@@ -4,11 +4,13 @@ use super::arch_storage::ArchStorage;
 
 /// A data structure to keep track of all the storages in the world, and their information.
 // TODO: Better docs
+#[derive(Default)]
 pub struct StorageFactory {
     pub(crate) arch_storages: ArchStorages,
 }
 
 /// All the [`ArchStorage`]s in the [`World`](crate::prelude::World)
+#[derive(Default)]
 pub struct ArchStorages {
     storages: Vec<ArchStorage>,
     pkeys: Vec<PrimeArchKey>,
@@ -17,7 +19,7 @@ pub struct ArchStorages {
 /// Identifies an [`ArchStorage`] in the [`StorageFactory`]
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct ArchStorageId(usize);
+pub struct ArchStorageId(pub(crate) usize);
 
 impl ArchStorages {
     /// Get a shared reference to an [`ArchStorage`] from its [`ArchStorageId`]
@@ -57,6 +59,22 @@ impl ArchStorages {
             .iter_mut()
             .zip(&mut self.storages)
             .find_map(move |(p, storage)| p.is_exact_archetype(pkey).then_some(storage))
+    }
+
+    /// Get mutable access to the [`ArchStorage`]s that stores archetypes with the exact same [`PrimeArchKey`].
+    /// If a storage for this Archetype doesn't exist already, a new one will be created.
+    pub fn get_mut_or_create_storage_with_exact_archetype<A: Archetype>(
+        &mut self,
+        comp_factory: &mut ComponentFactory,
+    ) -> (ArchStorageId, &mut ArchStorage) {
+        let pkey = A::get_prime_key_or_register(comp_factory);
+        for i in 0..self.storages.len() {
+            if self.pkeys[i].is_exact_archetype(pkey) {
+                return (ArchStorageId(i), &mut self.storages[i]);
+            }
+        }
+        let sid = self.store_new_archetype_checked::<A>(comp_factory).unwrap();
+        (sid, self.get_storage_mut(sid).unwrap())
     }
 
     /// Iterate over all of the [`ArchStorage`]s that store archetypes with a matching archetype of `pkey`.
@@ -106,7 +124,7 @@ impl ArchStorages {
         &mut self,
         comp_factory: &ComponentFactory,
     ) -> Option<ArchStorageId> {
-        (A::arch_info(comp_factory).is_some() && self.is_archetype_stored::<A>(comp_factory))
+        (A::arch_info(comp_factory).is_some() && !self.is_archetype_stored::<A>(comp_factory))
             // SAFETY: We checked that the components are registered, and that archetype isn't being stored already.
             .then_some(unsafe { self.store_new_archetype_unchecked::<A>(comp_factory) })
     }

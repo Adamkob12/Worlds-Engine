@@ -68,6 +68,7 @@ impl DataInfo {
 }
 
 /// The collection of all the Data in the world.
+#[derive(Default)]
 pub struct WorldData {
     /// Maps a data's [`TypeId`](std::any::TypeId) to its [`DataInfo`]
     id_map: TypeIdMap<DataInfo>,

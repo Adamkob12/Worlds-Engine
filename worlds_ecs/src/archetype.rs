@@ -51,8 +51,14 @@ impl ArchetypeInfo {
 /// # Safety
 /// Do not implement this trait for your types. If this trait is misimplemented.
 pub unsafe trait Archetype: Sized {
+    /// Get the [`ArchetypeInfo`] of this archetype for a matching [`World`] (whose component info is stored in [`ComponentFactory`]).
+    /// If this [`Archetype`]'s components aren't all registered, it registers them first, and then returns the [`ArchetypeInfo`].
+    fn get_info_or_register(comp_factory: &mut ComponentFactory) -> ArchetypeInfo;
     /// Get the [`ArchetypeInfo`] of this archetype for a matching [`World`] (whose component info is stored in [`ComponentFactory`])
     fn arch_info(comp_factory: &ComponentFactory) -> Option<ArchetypeInfo>;
+    /// Get the [`PrimeArchKey`] of this archetype for a matching [`World`] (whose component info is stored in [`ComponentFactory`]).
+    /// If this [`Archetype`]'s components aren't all registered, it registers them first, and then returns the [`PrimeArchKey`].
+    fn get_prime_key_or_register(comp_factory: &mut ComponentFactory) -> PrimeArchKey;
     /// Get the [`PrimeArchKey`] of this archetype for a matching [`World`] (whose component info is stored in [`ComponentFactory`])
     fn prime_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey>;
 }
@@ -61,6 +67,16 @@ unsafe impl<C> Archetype for C
 where
     C: Component,
 {
+    fn get_info_or_register(comp_factory: &mut ComponentFactory) -> ArchetypeInfo {
+        comp_factory
+            .register_component::<C>()
+            .map(|id| ArchetypeInfo {
+                component_ids: vec![id],
+                prime_key: id.prime_key(),
+            })
+            .expect("The maximum amount of registered components has been reached.")
+    }
+
     fn arch_info(comp_factory: &ComponentFactory) -> Option<ArchetypeInfo> {
         comp_factory
             .get_component_id::<C>()
@@ -75,23 +91,41 @@ where
             .get_component_id::<C>()
             .map(|cid| cid.prime_key())
     }
+
+    fn get_prime_key_or_register(comp_factory: &mut ComponentFactory) -> PrimeArchKey {
+        comp_factory
+            .register_component::<C>()
+            .map(|cid| cid.prime_key())
+            .expect("The maximum amout of registered components has been reached.")
+    }
 }
 
 macro_rules! impl_archetype {
     ($($name:ident),*) => {
+        #[allow(non_snake_case, unused)]
         unsafe impl<$($name: Archetype),*> Archetype for ($($name,)*) {
-            #[allow(non_snake_case, unused)]
+            fn get_info_or_register(components: &mut ComponentFactory) -> ArchetypeInfo {
+                let mut arch_info = ArchetypeInfo::default();
+                $(arch_info.merge_with($name::get_info_or_register(components));)*
+                arch_info
+            }
+
             fn arch_info(components: &ComponentFactory) -> Option<ArchetypeInfo> {
                 let mut arch_info = ArchetypeInfo::default();
                 $(arch_info.merge_with($name::arch_info(components)?);)*
                 Some(arch_info)
             }
 
-            #[allow(unused_mut, unused_variables)]
             fn prime_key(comp_factory: &ComponentFactory) -> Option<PrimeArchKey> {
                 let mut pkey = PrimeArchKey::IDENTITY;
                 $(pkey.merge_with($name::prime_key(comp_factory)?);)*
                 Some(pkey)
+            }
+
+            fn get_prime_key_or_register(comp_factory: &mut ComponentFactory) -> PrimeArchKey {
+                let mut pkey = PrimeArchKey::IDENTITY;
+                $(pkey.merge_with($name::get_prime_key_or_register(comp_factory));)*
+                pkey
             }
         }
     };
