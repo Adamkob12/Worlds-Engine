@@ -6,7 +6,7 @@ use crate::{
 };
 use bevy_ptr::{OwningPtr, Ptr, PtrMut};
 use smallvec::SmallVec;
-use std::{collections::HashMap, marker::PhantomData, ops::Deref};
+use std::collections::HashMap;
 
 /// Used to index an [`ArchStorage`]
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -17,7 +17,7 @@ pub struct ArchStorageIndex(pub(crate) usize);
 pub struct ArchStorage {
     /// By indexing this list using [`ComponentId::id`], we get the index to the component's storage
     /// in the `comp_storage` field.
-    comp_indexes: HashMap<ComponentId, usize>,
+    comp_indexes: HashMap<ComponentId, usize>, // TODO: optimize later
     /// The raw storage of the components.
     comp_storage: SmallVec<[BlobVec; MAX_COMPS_PER_ARCH]>,
     /// The [`PrimeArchKey`] of the archetype stored here.
@@ -148,6 +148,11 @@ impl ArchStorage {
     ) -> PtrMut<'_> {
         self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()]
             .get_mut_unchecked(index.0)
+    }
+
+    /// Iterate over all of the indicies in this storage.
+    pub fn iter_indices(&self) -> impl Iterator<Item = ArchStorageIndex> {
+        (0..self.len()).map(|i| ArchStorageIndex(i))
     }
 }
 
