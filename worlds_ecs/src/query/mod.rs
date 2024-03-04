@@ -328,7 +328,7 @@ mod tests {
     }
 
     #[test]
-    fn test_optional_queries() {
+    fn test_optional_queries_1() {
         let mut world = World::default();
 
         world.spawn((A(1), B(String::from("Cart"))));
@@ -339,13 +339,77 @@ mod tests {
         world.spawn((C(2), B(String::from("Alice"))));
         world.spawn((C(3), B(String::from("James"))));
 
-        let query_results = unsafe {
-            <(&B, Option<&A>, Option<&C>) as ComponentQuery>::iter_query_matches(
+        world.spawn(C(1));
+        world.spawn(C(2));
+        world.spawn(C(3));
+
+        world.spawn(A(1));
+        world.spawn(A(2));
+        world.spawn(A(3));
+
+        let optional_query_results = unsafe {
+            <(Option<&B>, Option<&A>, Option<&C>) as ComponentQuery>::iter_query_matches(
                 &mut world.storages.arch_storages,
                 &world.components,
             )
         };
 
-        assert_eq!(query_results.count(), 6);
+        let empty_query_results = unsafe {
+            <() as ComponentQuery>::iter_query_matches(
+                &mut world.storages.arch_storages,
+                &world.components,
+            )
+        };
+
+        assert_eq!(empty_query_results.count(), 12);
+        assert_eq!(optional_query_results.count(), 12);
+    }
+
+    #[test]
+    fn test_optional_queries_2() {
+        let mut world = World::default();
+
+        world.spawn((A(1), B(String::from("Cart"))));
+        world.spawn((A(2), B(String::from("Alice"))));
+        world.spawn((A(3), B(String::from("James"))));
+
+        world.spawn((C(1), B(String::from("Cart"))));
+        world.spawn((C(2), B(String::from("Alice"))));
+        world.spawn((C(3), B(String::from("James"))));
+
+        world.spawn(A(1));
+        world.spawn(A(2));
+        world.spawn(A(3));
+
+        world.spawn(A(1));
+        world.spawn(A(2));
+        world.spawn(A(3));
+
+        let optional_query_results = unsafe {
+            <(Option<&B>, Option<&A>, Option<&C>) as ComponentQuery>::iter_query_matches(
+                &mut world.storages.arch_storages,
+                &world.components,
+            )
+        };
+
+        let mut a_count = 0;
+        let mut b_count = 0;
+        let mut c_count = 0;
+
+        optional_query_results.for_each(|(b, a, c)| {
+            if b.is_some() {
+                b_count += 1;
+            }
+            if a.is_some() {
+                a_count += 1;
+            }
+            if c.is_some() {
+                c_count += 1;
+            }
+        });
+
+        assert_eq!(a_count, 9);
+        assert_eq!(b_count, 6);
+        assert_eq!(c_count, 3);
     }
 }
