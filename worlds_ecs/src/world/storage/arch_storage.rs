@@ -60,6 +60,11 @@ impl ArchStorage {
         self.len() == 0
     }
 
+    /// Return `true` if the storage stores a component with this [`ComponentId`]
+    pub fn contains(&self, comp_id: ComponentId) -> bool {
+        self.comp_indexes.contains_key(&comp_id)
+    }
+
     /// Store a [`Bundle`] of components with a matching archetype in this storage.
     pub fn store_bundle<B: Bundle + Archetype>(
         &mut self,
