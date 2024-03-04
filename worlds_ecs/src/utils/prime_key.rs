@@ -65,6 +65,11 @@ impl PrimeArchKey {
         self.0 *= other.0
     }
 
+    pub fn merge_with_but_panic_if_already_merged(&mut self, other: PrimeArchKey, error_msg: &str) {
+        (self.is_sub_archetype(other)).then(|| panic!("{}", error_msg));
+        self.0 *= other.0
+    }
+
     pub fn squared(self) -> PrimeArchKey {
         PrimeArchKey(self.0.pow(U256::from(2)))
     }

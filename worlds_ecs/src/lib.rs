@@ -23,6 +23,7 @@ pub mod prelude {
     pub use super::bundle::Bundle;
     pub use super::component;
     pub use super::component::*;
+    pub use super::query::*;
     pub use super::storage;
     pub use super::world::data::{Data, DataInfo, WorldData};
     pub use super::world::World;

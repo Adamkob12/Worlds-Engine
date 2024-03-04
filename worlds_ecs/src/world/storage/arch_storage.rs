@@ -123,6 +123,7 @@ impl ArchStorage {
     }
 
     /// Get a type-erased mutable reference to a pointer, from its index and [`ComponentId`].
+    /// Retuns `None` if the index is out of bounds, or if the component is not stored in this storage.
     pub fn get_component_mut(
         &mut self,
         index: ArchStorageIndex,

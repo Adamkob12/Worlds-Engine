@@ -93,7 +93,7 @@ impl World {
 
     /// Despawn an entity from the [`World`].
     pub fn despawn(&mut self, entity: EntityId) {
-        let entity_meta = self
+        let _entity_meta = self
             .entities
             .get_entity_meta(entity)
             .expect("Can't despawn already despawned entity.");

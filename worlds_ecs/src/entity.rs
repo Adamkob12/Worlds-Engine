@@ -63,7 +63,9 @@ impl EntityFactory {
     /// Panics if the maximum amount of entities has been reached (2^32).
     fn revive_removed_entity(&mut self, entity_meta: EntityMeta) -> Option<EntityId> {
         let id = self.queued_entitys.pop_front()?;
-        Some(id.with_generation(self.generations[id.id() as usize]))
+        let entity = id.with_generation(self.generations[id.id() as usize]);
+        self.set_entity_meta(entity_meta, entity);
+        Some(entity)
     }
 
     /// Produce a new entity, and return its [`EntityId`]. Note this is different from [`Self::alloc_new_entity`]
@@ -117,6 +119,7 @@ pub struct EntityMeta {
 }
 
 impl EntityMeta {
+    #[allow(unused)]
     pub(crate) const PLACEHOLDER: EntityMeta = EntityMeta {
         archetype_storage_id: ArchStorageId(usize::MAX),
         archetype_storage_index: ArchStorageIndex(usize::MAX),
