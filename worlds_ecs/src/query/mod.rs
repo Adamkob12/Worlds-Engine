@@ -1,8 +1,10 @@
 #![allow(missing_docs)] // TODO: Remove
 
 pub mod arch_query;
+pub mod query_filter;
 
 pub use arch_query::*;
+pub use query_filter::*;
 
 #[cfg(test)]
 mod tests {
