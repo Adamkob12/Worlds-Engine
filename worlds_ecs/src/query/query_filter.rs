@@ -1,3 +1,4 @@
+use super::arch_query::ArchQuery;
 use crate::{
     archetype::Archetype,
     prelude::ComponentFactory,
@@ -5,8 +6,6 @@ use crate::{
 };
 use std::marker::PhantomData;
 use worlds_derive::all_tuples;
-
-use super::arch_query::ArchQuery;
 
 pub struct Not<T>(PhantomData<T>);
 

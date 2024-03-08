@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-//! The ECS for the Red Flower Game Engine
+//! The ECS for the Worlds Engine.
 
 /// Module responsible for anything to do archetypes.
 pub mod archetype;
