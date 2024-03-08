@@ -1,5 +1,4 @@
-use std::marker::PhantomData;
-
+use super::query_filter::{ArchFilter, FilterResult};
 use crate::{
     prelude::{Component, ComponentFactory},
     utils::prime_key::PrimeArchKey,
@@ -9,9 +8,6 @@ use crate::{
     },
 };
 use worlds_derive::all_tuples;
-
-// TODO: Docs
-pub struct Contains<T>(PhantomData<T>);
 
 pub unsafe trait ArchQuery {
     type Item<'a>;
@@ -27,7 +23,7 @@ pub unsafe trait ArchQuery {
     ) -> Self::Item<'a>;
 
     /// # Safety
-    ///  [] The caller must ensure that the raw pointer to [`ArchStorages`] is valid, and usable.
+    ///  1) The caller must ensure that the raw pointer to [`ArchStorages`] is valid, and usable.
     unsafe fn iter_query_matches<'a>(
         arch_storages: *mut ArchStorages,
         comp_factory: &'a ComponentFactory,
@@ -122,6 +118,7 @@ unsafe impl<C: Component> ArchQuery for Option<&mut C> {
             .map(|c| c.deref_mut::<C>())
     }
 
+    #[inline]
     fn merge_prime_arch_key_with(_pkey: &mut PrimeArchKey, _comp_factory: &ComponentFactory) {
         // No need to merge anything, because this [`ComponentQuery`] doesn't restrict the archetype
     }
@@ -145,28 +142,25 @@ unsafe impl<C: Component> ArchQuery for Option<&C> {
             .map(|c| c.deref::<C>())
     }
 
+    #[inline]
     fn merge_prime_arch_key_with(_pkey: &mut PrimeArchKey, _comp_factory: &ComponentFactory) {
-        // No need to merge anything, because this [`ComponentQuery`] doesn't restrict the archetype
+        // No need to merge anything, because this [`ArchQuery`] doesn't restrict the archetype
     }
 }
 
-unsafe impl<C: Component> ArchQuery for Contains<C> {
+unsafe impl<F: ArchFilter> ArchQuery for F {
     type Item<'a> = bool;
 
     unsafe fn fetch<'a>(
         arch_storage: *mut ArchStorage,
-        _index: ArchStorageIndex,
+        index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> Self::Item<'a> {
-        (*arch_storage).contains(
-            comp_factory
-                .get_component_id::<C>()
-                .expect("Can't query unregistered component"),
-        )
+        F::filter(arch_storage, index, comp_factory).collapse()
     }
 
-    fn merge_prime_arch_key_with(_pkey: &mut PrimeArchKey, _comp_factory: &ComponentFactory) {
-        // No need to merge anything, because this [`ComponentQuery`] doesn't restrict the archetype
+    fn merge_prime_arch_key_with(pkey: &mut PrimeArchKey, comp_factory: &ComponentFactory) {
+        // No need to merge anything, because an [`ArchFilter`] doesn't restrict the archetype
     }
 }
 
@@ -198,4 +192,4 @@ macro_rules! impl_comp_query_for_tuple {
     };
 }
 
-all_tuples!(impl_comp_query_for_tuple, 0, 12, B);
+all_tuples!(impl_comp_query_for_tuple, 0, 12, Q);

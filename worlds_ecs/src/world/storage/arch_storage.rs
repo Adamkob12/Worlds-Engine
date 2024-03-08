@@ -62,7 +62,14 @@ impl ArchStorage {
 
     /// Return `true` if the storage stores a component with this [`ComponentId`]
     pub fn contains(&self, comp_id: ComponentId) -> bool {
-        self.comp_indexes.contains_key(&comp_id)
+        self.prime_key.is_sub_archetype(comp_id.prime_key())
+    }
+
+    /// Return `true` if the storage stores a all the components of this [`Archetype`]
+    pub fn contains_archetype<A: Archetype>(&self, comp_factory: &ComponentFactory) -> bool {
+        A::prime_key(comp_factory)
+            .map(|prime_key| self.prime_key.is_sub_archetype(prime_key))
+            .unwrap_or(false)
     }
 
     /// Store a [`Bundle`] of components with a matching archetype in this storage.
