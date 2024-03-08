@@ -1,4 +1,4 @@
-use super::query_filter::ArchFilter;
+use super::query_filter::{ArchFilter, FilterResult};
 use crate::{
     prelude::{Component, ComponentFactory},
     utils::prime_key::PrimeArchKey,
@@ -38,6 +38,29 @@ pub unsafe trait ArchQuery {
                     .iter_indices()
                     // SAFETY: The index must be in bounds because it came from the storage itself.
                     .map(|index| unsafe { Self::fetch(arch_storage, index, comp_factory) })
+            })
+            .flatten()
+    }
+
+    /// # Safety
+    ///  1) The caller must ensure that the raw pointer to [`ArchStorages`] is valid, and usable.
+    unsafe fn iter_filtered_query_matches<'a, F: ArchFilter>(
+        arch_storages: *mut ArchStorages,
+        comp_factory: &'a ComponentFactory,
+    ) -> impl Iterator<Item = Self::Item<'a>> + 'a {
+        let mut pkey = PrimeArchKey::IDENTITY;
+        Self::merge_prime_arch_key_with(&mut pkey, comp_factory);
+        (*arch_storages)
+            .iter_storages_with_matching_archetype_mut(pkey)
+            .map(|arch_storage| {
+                arch_storage
+                    .iter_indices()
+                    // SAFETY: The index must be in bounds because it came from the storage itself.
+                    .filter_map(|index| unsafe {
+                        F::filter(arch_storage, index, comp_factory)
+                            .collapse()
+                            .then_some(Self::fetch(arch_storage, index, comp_factory))
+                    })
             })
             .flatten()
     }

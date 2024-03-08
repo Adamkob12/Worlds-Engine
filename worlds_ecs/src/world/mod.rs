@@ -1,7 +1,7 @@
 use crate::{
     archetype::Archetype,
     entity::{EntityId, EntityMeta},
-    prelude::{Bundle, Component},
+    prelude::{ArchFilter, ArchQuery, Bundle, Component},
 };
 
 /// Module responsible for any data that can be stored in the World.
@@ -31,6 +31,30 @@ impl World {}
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 impl World {}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//                               QUERIES API
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+impl World {
+    /// Query the world for components.
+    // TODO: Better docs + examples
+    pub fn query<Q: ArchQuery>(&mut self) -> impl Iterator<Item = Q::Item<'_>> + '_ {
+        // SAFETY: The query is safe to use, because the pointer to the storages came from a &mut.
+        unsafe { Q::iter_query_matches(&mut self.storages.arch_storages, &self.components) }
+    }
+
+    /// Query the world for components, with a filter.
+    // TODO: Better docs + examples
+    pub fn query_where<Q: ArchQuery, F: ArchFilter>(
+        &mut self,
+    ) -> impl Iterator<Item = Q::Item<'_>> + '_ {
+        // SAFETY: The query is safe to use, because the pointer to the storages came from a &mut.
+        unsafe {
+            Q::iter_filtered_query_matches::<F>(&mut self.storages.arch_storages, &self.components)
+        }
+    }
+}
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                               ENTITIES API
