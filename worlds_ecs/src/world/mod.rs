@@ -46,7 +46,7 @@ impl World {
 
     /// Query the world for components, with a filter.
     // TODO: Better docs + examples
-    pub fn query_where<Q: ArchQuery, F: ArchFilter>(
+    pub fn query_filtered<Q: ArchQuery, F: ArchFilter>(
         &mut self,
     ) -> impl Iterator<Item = Q::Item<'_>> + '_ {
         // SAFETY: The query is safe to use, because the pointer to the storages came from a &mut.

@@ -12,7 +12,7 @@ pub struct Not<T>(PhantomData<T>);
 
 pub struct Or<T>(PhantomData<T>);
 
-pub struct Contains<T>(PhantomData<T>);
+pub struct Has<T>(PhantomData<T>);
 
 pub unsafe trait ArchFilter
 where
@@ -75,7 +75,7 @@ unsafe impl<Q: ArchFilter> ArchQuery for Or<Q> {
     }
 }
 
-unsafe impl<A: Archetype> ArchQuery for Contains<A> {
+unsafe impl<A: Archetype> ArchQuery for Has<A> {
     type Item<'a> = bool;
 
     unsafe fn fetch<'a>(

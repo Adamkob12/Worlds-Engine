@@ -181,7 +181,7 @@ mod tests {
         world.spawn(A(2));
         world.spawn(A(3));
 
-        let optional_query_results = world.query::<(Contains<A>, Contains<B>, Contains<C>)>();
+        let optional_query_results = world.query::<(Has<A>, Has<B>, Has<C>)>();
         let mut a_count = 0;
         let mut b_count = 0;
         let mut c_count = 0;
@@ -199,5 +199,61 @@ mod tests {
         assert_eq!(a_count, 9);
         assert_eq!(b_count, 6);
         assert_eq!(c_count, 3);
+    }
+
+    #[test]
+    fn test_filtered_queries() {
+        let mut world = World::default();
+        world.spawn((A(1), B(String::from("Cart"))));
+        world.spawn((A(2), B(String::from("Alice"))));
+        world.spawn((A(3), B(String::from("James"))));
+        world.spawn((C(1), B(String::from("Cart"))));
+        world.spawn((C(2), B(String::from("Alice"))));
+        world.spawn((C(3), B(String::from("James"))));
+        world.spawn(A(1));
+        world.spawn(A(2));
+        world.spawn(A(3));
+
+        let filtered_query_results = world.query_filtered::<(&A, &B), Has<C>>();
+        assert_eq!(filtered_query_results.count(), 0);
+
+        world
+            .query::<(&A, Has<C>)>()
+            .for_each(|(_, has)| assert!(!has));
+
+        world
+            .query_filtered::<&mut A, Has<B>>()
+            .for_each(|a| a.0 *= 10);
+
+        world
+            .query::<(&A, Has<B>)>()
+            .for_each(|(A(a), has)| assert_eq!(*a < 4, !has));
+
+        world
+            .query_filtered::<&B, (Has<A>, Has<C>)>()
+            .for_each(|_| assert!(false));
+
+        assert_eq!(
+            world.query_filtered::<&B, Or<(Has<A>, Has<C>)>>().count(),
+            6,
+        );
+
+        assert_eq!(
+            world.query_filtered::<&B, (Has<A>, Not<Has<C>>)>().count(),
+            3,
+        );
+        assert_eq!(
+            world.query_filtered::<&B, (Not<Has<A>>, Has<C>)>().count(),
+            3,
+        );
+
+        assert_eq!(
+            world
+                .query_filtered::<&B, Not<Or<(Has<A>, Has<C>)>>>()
+                .count(),
+            0,
+        );
+
+        assert_eq!(world.query_filtered::<(), Has<(A, B)>>().count(), 3);
     }
 }
