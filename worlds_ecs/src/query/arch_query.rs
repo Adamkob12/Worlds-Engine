@@ -1,4 +1,4 @@
-use super::query_filter::{ArchFilter, FilterResult};
+use super::query_filter::ArchFilter;
 use crate::{
     prelude::{Component, ComponentFactory},
     utils::prime_key::PrimeArchKey,
@@ -11,7 +11,8 @@ use worlds_derive::all_tuples;
 
 pub unsafe trait ArchQuery {
     type Item<'a>;
-    fn merge_prime_arch_key_with(pkey: &mut PrimeArchKey, comp_factory: &ComponentFactory);
+    #[inline]
+    fn merge_prime_arch_key_with(_pkey: &mut PrimeArchKey, _comp_factory: &ComponentFactory) {}
     /// # Safety
     ///   1) The caller must ensure that the [`ArchStorageIndex`] is withing the bounds of the [`ArchStorage`]
     /// (as specified in [`ArchStorage::get_component_unchecked`]).
@@ -117,11 +118,6 @@ unsafe impl<C: Component> ArchQuery for Option<&mut C> {
             )
             .map(|c| c.deref_mut::<C>())
     }
-
-    #[inline]
-    fn merge_prime_arch_key_with(_pkey: &mut PrimeArchKey, _comp_factory: &ComponentFactory) {
-        // No need to merge anything, because this [`ComponentQuery`] doesn't restrict the archetype
-    }
 }
 
 unsafe impl<C: Component> ArchQuery for Option<&C> {
@@ -141,30 +137,8 @@ unsafe impl<C: Component> ArchQuery for Option<&C> {
             )
             .map(|c| c.deref::<C>())
     }
-
-    #[inline]
-    fn merge_prime_arch_key_with(_pkey: &mut PrimeArchKey, _comp_factory: &ComponentFactory) {
-        // No need to merge anything, because this [`ArchQuery`] doesn't restrict the archetype
-    }
 }
 
-unsafe impl<F: ArchFilter> ArchQuery for F {
-    type Item<'a> = bool;
-
-    unsafe fn fetch<'a>(
-        arch_storage: *mut ArchStorage,
-        index: ArchStorageIndex,
-        comp_factory: &'a ComponentFactory,
-    ) -> Self::Item<'a> {
-        F::filter(arch_storage, index, comp_factory).collapse()
-    }
-
-    fn merge_prime_arch_key_with(pkey: &mut PrimeArchKey, comp_factory: &ComponentFactory) {
-        // No need to merge anything, because an [`ArchFilter`] doesn't restrict the archetype
-    }
-}
-
-//
 //
 //
 //

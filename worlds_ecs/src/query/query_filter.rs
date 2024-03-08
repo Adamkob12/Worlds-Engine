@@ -6,9 +6,11 @@ use crate::{
 use std::marker::PhantomData;
 use worlds_derive::all_tuples;
 
-pub struct Not<T: ArchFilter>(PhantomData<T>);
+use super::arch_query::ArchQuery;
 
-pub struct Or<T: ArchFilter>(PhantomData<T>);
+pub struct Not<T>(PhantomData<T>);
+
+pub struct Or<T>(PhantomData<T>);
 
 pub struct Contains<T>(PhantomData<T>);
 
@@ -49,33 +51,59 @@ impl FilterResult for bool {
     }
 }
 
-unsafe impl<Q: ArchFilter> ArchFilter for Not<Q> {
-    unsafe fn filter<'a>(
-        arch_storage: *const ArchStorage,
+unsafe impl<Q: ArchFilter> ArchQuery for Not<Q> {
+    type Item<'a> = bool;
+
+    unsafe fn fetch<'a>(
+        arch_storage: *mut ArchStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
-    ) -> impl FilterResult {
-        !Q::filter(arch_storage, index, comp_factory).all()
+    ) -> bool {
+        !Q::filter(arch_storage, index, comp_factory).collapse()
     }
 }
 
-unsafe impl<Q: ArchFilter> ArchFilter for Or<Q> {
-    unsafe fn filter<'a>(
-        arch_storage: *const ArchStorage,
+unsafe impl<Q: ArchFilter> ArchQuery for Or<Q> {
+    type Item<'a> = bool;
+
+    unsafe fn fetch<'a>(
+        arch_storage: *mut ArchStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
-    ) -> impl FilterResult {
+    ) -> bool {
         Q::filter(arch_storage, index, comp_factory).any()
     }
 }
 
-unsafe impl<A: Archetype> ArchFilter for Contains<A> {
-    unsafe fn filter<'a>(
-        arch_storage: *const ArchStorage,
+unsafe impl<A: Archetype> ArchQuery for Contains<A> {
+    type Item<'a> = bool;
+
+    unsafe fn fetch<'a>(
+        arch_storage: *mut ArchStorage,
         _index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
-    ) -> impl FilterResult {
+    ) -> bool {
         (*arch_storage).contains_archetype::<A>(comp_factory)
+    }
+
+    fn merge_prime_arch_key_with(
+        _pkey: &mut crate::utils::prime_key::PrimeArchKey,
+        _comp_factory: &ComponentFactory,
+    ) {
+        // No need, because this doesn't change the archetype.
+    }
+}
+
+unsafe impl<Q: ArchQuery> ArchFilter for Q
+where
+    for<'a> Q::Item<'a>: FilterResult,
+{
+    unsafe fn filter<'a>(
+        arch_storage: *const ArchStorage,
+        index: ArchStorageIndex,
+        comp_factory: &'a ComponentFactory,
+    ) -> impl FilterResult {
+        Q::fetch(arch_storage as *mut ArchStorage, index, comp_factory)
     }
 }
 
