@@ -1,12 +1,7 @@
-use crate::storage::blob_vec::BlobVec;
-use crate::utils::TypeIdMap;
 #[allow(unused_imports)] // For the docs
 use crate::world::World;
 use bevy_ptr::OwningPtr;
-use std::{
-    alloc::Layout,
-    any::{type_name, TypeId},
-};
+use std::{alloc::Layout, any::type_name};
 
 /// Piece of Data in the [`World`]
 pub trait Data: 'static + Send + Sync {}
@@ -64,36 +59,5 @@ impl DataInfo {
             drop_fn,
             name,
         }
-    }
-}
-
-/// The collection of all the Data in the world.
-#[derive(Default)]
-pub struct WorldData {
-    /// Maps a data's [`TypeId`](std::any::TypeId) to its [`DataInfo`]
-    id_map: TypeIdMap<DataInfo>,
-}
-
-impl WorldData {
-    /// Register a new piece of [`Data`] with its default values that can be stored in the [`World`]
-    pub fn register_new<T: Data>(&mut self) -> bool {
-        self.register_new_with_info::<T>(DataInfo::deafult_for::<T>())
-    }
-
-    /// Register a new piece of [`Data`] with provided [`DataInfo`] that can be stored in the [`World`]
-    pub fn register_new_with_info<T: Data>(&mut self, data_info: DataInfo) -> bool {
-        self.id_map.insert(TypeId::of::<T>(), data_info).is_none()
-    }
-
-    /// Generate a type-erased data structure that can store values of [`T`].
-    /// # Safety
-    ///
-    /// The caller must ensure that the [`DataInfo`] that is stored for this `T` matces the actual
-    /// memory layout of `T`, and that `DataInfo::drop_fn()` is safe to call with an [`OwningPtr`]  to `T`
-    pub unsafe fn new_data_storage<T: Data>(&self) -> Option<BlobVec> {
-        Some(BlobVec::new_for_data(
-            self.id_map.get(&TypeId::of::<T>())?,
-            1,
-        ))
     }
 }

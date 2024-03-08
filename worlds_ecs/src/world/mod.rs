@@ -14,7 +14,6 @@ pub mod storage;
 // TODO: Better docs
 #[derive(Default)]
 pub struct World {
-    pub(crate) _data: data::WorldData,
     pub(crate) components: crate::component::ComponentFactory,
     pub(crate) entities: crate::entity::EntityFactory,
     pub(crate) storages: storage::storages::StorageFactory,
