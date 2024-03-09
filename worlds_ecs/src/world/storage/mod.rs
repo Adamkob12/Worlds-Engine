@@ -11,6 +11,8 @@ use std::ops::Deref;
 pub mod arch_storage;
 /// A module to define abstractions around all the storages in the world.
 pub mod storages;
+/// A module to define abstractions around storing entities' tags.
+pub mod tag_storage;
 
 /// The storage for entities with the same [`Archetype`]. This holds the actual data of the entities,
 /// as well as data about the entities themselves.

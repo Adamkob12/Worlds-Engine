@@ -13,6 +13,8 @@ pub mod entity;
 pub mod query;
 /// Module responsible for anything to do with storage.
 pub mod storage;
+/// Module responsible for anything to do with tags.
+pub mod tag;
 /// Module responsible for anything to do with the world.
 pub mod world;
 

@@ -1,7 +1,10 @@
+use std::sync::Arc;
+
 use crate::{
     archetype::Archetype,
     entity::{EntityId, EntityMeta},
     prelude::{ArchFilter, ArchQuery, Bundle, Component},
+    tag::{Tag, TagFactory, TagTracker},
 };
 
 /// Module responsible for any data that can be stored in the World.
@@ -23,7 +26,30 @@ pub struct World {
 //                               MISC. API
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-impl World {}
+impl World {
+    /// Create a new empty [`World`] (just like `World::default`), but with a custom tag factory (instead of an empty one).
+    /// This is useful because you can't change the tag factory after assigning it to the world.
+    pub fn with_tags(tagf: TagFactory) -> Self {
+        Self {
+            storages: storage::storages::StorageFactory {
+                tag_storage: storage::tag_storage::TagStorage::new(Arc::new(tagf)),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    }
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//                               TAGS API
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+impl World {
+    /// Get the [`TagTracker`] of an entity.
+    pub fn get_tag_tracker(&self, entity: EntityId) -> TagTracker {
+        self.storages.tag_storage.get_tag_tracker(entity)
+    }
+}
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                               COMPONENTS API
@@ -72,6 +98,7 @@ impl World {
             archetype_storage_index: index,
         });
         storage.store_entity(entity_id, bundle, &self.components);
+        self.storages.tag_storage.new_entity();
         entity_id
     }
 
@@ -131,6 +158,7 @@ impl World {
                 entity_to_update,
             );
         }
+        self.storages.tag_storage.untag_all(entity);
         self.entities.remove_entity(entity);
     }
 }

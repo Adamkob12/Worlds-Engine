@@ -1,12 +1,13 @@
 use crate::{archetype::Archetype, prelude::ComponentFactory, utils::prime_key::PrimeArchKey};
 
-use super::{arch_storage::ArchStorage, ArchEntityStorage};
+use super::{arch_storage::ArchStorage, tag_storage::TagStorage, ArchEntityStorage};
 
 /// A data structure to keep track of all the storages in the world, and their information.
 // TODO: Better docs
 #[derive(Default)]
 pub struct StorageFactory {
     pub(crate) arch_storages: ArchStorages,
+    pub(crate) tag_storage: TagStorage,
 }
 
 /// All the [`ArchStorage`]s in the [`World`](crate::prelude::World)
