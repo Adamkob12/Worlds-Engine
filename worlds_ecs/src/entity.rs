@@ -94,7 +94,7 @@ impl EntityFactory {
         self.queued_entitys.push_back(entity)
     }
 
-    /// The the [`EntityMeta`] of an entity.
+    /// The the [`EntityMeta`] of an entity, with generation-verification.
     pub fn get_entity_meta(&self, entity: EntityId) -> Option<&EntityMeta> {
         self.verify_generation(entity)
             .then(|| &self.entity_metas[entity.id() as usize])
@@ -103,6 +103,11 @@ impl EntityFactory {
     /// Set the [`EntityMeta`] of an entity.
     pub fn set_entity_meta(&mut self, entity_meta: EntityMeta, entity: EntityId) {
         self.entity_metas[entity.id() as usize] = entity_meta
+    }
+
+    /// Set the [`ArchStorageIndex`] of an entity's [`EntityMeta`].
+    pub fn set_entity_arch_storage_index(&mut self, index: ArchStorageIndex, entity: EntityId) {
+        self.entity_metas[entity.id() as usize].archetype_storage_index = index
     }
 
     /// Returns how many entities are there in the world.

@@ -90,4 +90,19 @@ impl ArchEntityStorage {
     pub unsafe fn get_entity_at_unchecked(&self, index: ArchStorageIndex) -> EntityId {
         *self.entities.get_unchecked(index.0)
     }
+
+    /// Swap-remove an entity and its data. This is used for despawning entities.
+    /// Returns the [`EntityId`] that was last, so its [`EntityMeta`] can be updated
+    /// to reflect the new [`ArchStorageIndex`].
+    /// Return `None` if no `EntityMeta` needs to be updated (that swap-remove removed the last entity)
+    /// # Panics
+    /// Panics if the index is out of bounds.
+    pub fn swap_remove(&mut self, index: ArchStorageIndex) -> Option<EntityId> {
+        self.entities.swap_remove(index.0);
+        // SAFETY: doing `swap_remove` on self.entities didn't panic, and because self.entities and
+        // the internal component storages have the same length, that must mean the index is in bounds.
+        unsafe { self.arch_storage.swap_remove_unchecked(index) }
+        self.get_entity_at(index) // If we swap-remove the last entity, that means that there is no entity that
+                                  // whose `EntityMeta` needs updating. So we return `None`.
+    }
 }

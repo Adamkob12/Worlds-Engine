@@ -171,66 +171,18 @@ impl ArchStorage {
     pub fn iter_indices(&self) -> impl Iterator<Item = ArchStorageIndex> {
         (0..self.len()).map(|i| ArchStorageIndex(i))
     }
+
+    /// Performs a swap-remove, pop the last components in the storages and place them in the given index.
+    /// components corresponding to the given index are removed.
+    /// # Safety
+    /// It is the caller responsibility to ensure that the index is in bounds.
+    pub unsafe fn swap_remove_unchecked(&mut self, index: ArchStorageIndex) {
+        self.comp_storage
+            .iter_mut()
+            .for_each(|bvec| bvec.swap_remove_and_drop_unchecked(index.0));
+        self.len -= 1;
+    }
 }
-
-// /// Shared access to an [`ArchStorage`]
-// pub struct ReadArchStorage<'a, A: Archetype> {
-//     arch_storage: &'a ArchStorage,
-//     _marker: PhantomData<A>,
-// }
-
-// /// Exclusive access to an [`ArchStorage`]
-// pub struct WriteArchStorage<'a, A: Archetype> {
-//     arch_storage: &'a mut ArchStorage,
-//     _marker: PhantomData<A>,
-// }
-
-// impl<'a, A: Archetype> ReadArchStorage<'a, A> {
-//     /// Get shared access to the [`Archetype`] stored at the index.
-//     pub fn get(&self, index: ArchStorageIndex) -> Option<&'a A> {
-//         todo!()
-//     }
-
-//     /// Get shared access to the [`Archetype`] stored at the index, without checking the index is in bounds.
-//     /// # Safety
-//     /// The caller must ensure that the index [`ArchStorageIndex`] is valid and within the bounds of this storage.
-//     pub unsafe fn get_unchecked(&self, index: ArchStorageIndex) -> &'a A {
-//         todo!()
-//     }
-// }
-
-// impl<'a, A: Archetype> WriteArchStorage<'a, A> {
-//     /// Get exclusive access to the [`Archetype`] stored at the index.
-//     pub fn get_mut(&self, index: ArchStorageIndex) -> Option<&'a mut A> {
-//         todo!()
-//     }
-
-//     /// Get exclusive access to the [`Archetype`] stored at the index, without checking the index is in bounds.
-//     /// # Safety
-//     /// The caller must ensure that the index [`ArchStorageIndex`] is valid and within the bounds of this storage.
-//     pub unsafe fn get_mut_unchecked(&self, index: ArchStorageIndex) -> &'a mut A {
-//         todo!()
-//     }
-
-//     /// Store a bundle of components with the same archetype in this storage.
-//     pub unsafe fn push(&self, bundle: A) -> Option<ArchStorageIndex>
-//     where
-//         A: Bundle,
-//     {
-//         todo!()
-//     }
-// }
-
-// impl<'a, A: Archetype> Deref for WriteArchStorage<'a, A> {
-//     type Target = ReadArchStorage<'a, A>;
-
-//     fn deref(&self) -> &Self::Target {
-//         ReadArchStorage {
-//             arch_storage: &*self.arch_storage,
-//             _marker: PhantomData,
-//         }
-//     }
-// }
 
 #[cfg(test)]
 mod tests {

@@ -115,18 +115,29 @@ impl World {
 
     /// Despawn an entity from the [`World`].
     pub fn despawn(&mut self, entity: EntityId) {
-        let _entity_meta = self
+        let entity_meta = self
             .entities
             .get_entity_meta(entity)
             .expect("Can't despawn already despawned entity.");
+        if let Some(entity_to_update) = self
+            .storages
+            .arch_storages
+            .get_storage_mut(entity_meta.archetype_storage_id)
+            .unwrap()
+            .swap_remove(entity_meta.archetype_storage_index)
+        {
+            self.entities.set_entity_arch_storage_index(
+                entity_meta.archetype_storage_index,
+                entity_to_update,
+            );
+        }
         self.entities.remove_entity(entity);
-        todo!() // Also remove from storage
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
+    use crate::{entity::EntityId, prelude::*, world::storage::storages::ArchStorageId};
 
     #[derive(Component)]
     struct A(usize);
@@ -178,5 +189,60 @@ mod tests {
     fn test_multiple_components_2() {
         let mut world = World::default();
         world.spawn((A(0), A(1), B(Box::new([0, 1]))));
+    }
+
+    #[test]
+    fn test_despawning_entities_1() {
+        let mut world = World::default();
+
+        let a_cart = world.spawn((A(1), C(String::from("Cart"))));
+        let a_alice = world.spawn((A(2), C(String::from("Alice"))));
+        let a_james = world.spawn((A(3), C(String::from("James"))));
+
+        assert_eq!(
+            world
+                .storages
+                .arch_storages
+                .get_storage(ArchStorageId(0))
+                .unwrap()
+                .len(),
+            3
+        );
+        assert_eq!(world.query::<(&A, &C)>().into_iter().count(), 3);
+
+        world.despawn(a_cart);
+        assert_eq!(world.get_component::<A>(a_alice).unwrap().0, 2);
+        assert_eq!(world.get_component::<A>(a_james).unwrap().0, 3);
+        assert!(world.get_component::<A>(a_cart).is_none());
+
+        assert_eq!(
+            world
+                .storages
+                .arch_storages
+                .get_storage(ArchStorageId(0))
+                .unwrap()
+                .len(),
+            2
+        );
+        world
+            .query_filtered::<EntityId, Has<(A, C)>>()
+            .into_iter()
+            .for_each(|eid| assert_ne!(eid, a_cart));
+        assert_eq!(world.query::<(&A, &C)>().into_iter().count(), 2);
+    }
+
+    #[test]
+    fn test_despawning_entities_2() {
+        let mut world = World::default();
+        let mut entities = Vec::new();
+
+        (0..1000).for_each(|i| entities.push(world.spawn(A(i))));
+
+        (0..1000)
+            .filter(|i| i % 2 == 0)
+            .for_each(|i| world.despawn(entities[i]));
+
+        assert_eq!(world.query::<&A>().into_iter().count(), 500);
+        world.query::<&A>().for_each(|A(i)| assert!(i % 2 == 1));
     }
 }
