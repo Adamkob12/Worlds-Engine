@@ -77,4 +77,17 @@ impl ArchEntityStorage {
         self.arch_storage
             .get_component_mut_unchecked(index, comp_id)
     }
+
+    /// Get the [`EntityId`] of the entity stored at that index.
+    /// Return `None` if the index is out of bounds.
+    pub fn get_entity_at(&self, index: ArchStorageIndex) -> Option<EntityId> {
+        self.entities.get(index.0).copied()
+    }
+
+    /// Get the [`EntityId`] of the entity stored at that index, without doing bounds checking.
+    /// # Safety
+    /// The caller must ensure that the `index` is valid, and within the bounds of the storage.
+    pub unsafe fn get_entity_at_unchecked(&self, index: ArchStorageIndex) -> EntityId {
+        *self.entities.get_unchecked(index.0)
+    }
 }

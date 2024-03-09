@@ -1,5 +1,6 @@
 use super::query_filter::{ArchFilter, FilterResult};
 use crate::{
+    entity::EntityId,
     prelude::{Component, ComponentFactory},
     utils::prime_key::PrimeArchKey,
     world::storage::{arch_storage::ArchStorageIndex, storages::ArchStorages, ArchEntityStorage},
@@ -156,6 +157,18 @@ unsafe impl<C: Component> ArchQuery for Option<&C> {
                     .expect("Can't query unregistered component"),
             )
             .map(|c| c.deref::<C>())
+    }
+}
+
+unsafe impl ArchQuery for EntityId {
+    type Item<'a> = EntityId;
+
+    unsafe fn fetch<'a>(
+        arch_storage: *mut ArchEntityStorage,
+        index: ArchStorageIndex,
+        _comp_factory: &'a ComponentFactory,
+    ) -> Self::Item<'a> {
+        (*arch_storage).get_entity_at_unchecked(index)
     }
 }
 

@@ -9,7 +9,7 @@ pub use query_filter::*;
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
+    use crate::{entity::EntityId, prelude::*};
 
     #[derive(Component)]
     struct A(usize);
@@ -255,5 +255,20 @@ mod tests {
         );
 
         assert_eq!(world.query_filtered::<(), Has<(A, B)>>().count(), 3);
+    }
+
+    #[test]
+    fn test_querying_entity_ids() {
+        let mut world = World::default();
+
+        let cart_id = world.spawn((A(1), B(String::from("Cart"))));
+        let alice_id = world.spawn((C(2), B(String::from("Alice"))));
+
+        world
+            .query_filtered::<EntityId, Has<(A, B)>>()
+            .for_each(|eid| assert_eq!(eid, cart_id));
+        world
+            .query_filtered::<EntityId, Has<(C, B)>>()
+            .for_each(|eid| assert_eq!(eid, alice_id));
     }
 }

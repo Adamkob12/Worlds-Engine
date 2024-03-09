@@ -2,7 +2,7 @@ use crate::world::storage::{arch_storage::ArchStorageIndex, storages::ArchStorag
 use std::collections::VecDeque;
 
 /// A unique identifer for an entity in the in the [`World`](crate::world::World)
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EntityId {
     id: u32,
     gen: u32,
