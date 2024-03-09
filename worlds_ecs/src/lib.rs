@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![feature(get_mut_unchecked)]
 //! The ECS for the Worlds Engine.
 
 /// Module responsible for anything to do archetypes.

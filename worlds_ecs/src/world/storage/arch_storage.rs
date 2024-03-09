@@ -263,18 +263,18 @@ mod tests {
             );
             assert_eq!(
                 abc_storage
-                    .get_component(ArchStorageIndex(1), ComponentId::new(0))
+                    .get_component(ArchStorageIndex(1), ComponentId::new(1))
                     .unwrap()
-                    .deref::<A>()
+                    .deref::<B>()
                     .0,
-                1
+                [10; 2]
             );
             assert_eq!(
                 abc_storage
-                    .get_component_unchecked(ArchStorageIndex(2), ComponentId::new(0))
-                    .deref::<A>()
+                    .get_component_unchecked(ArchStorageIndex(2), ComponentId::new(2))
+                    .deref::<C>()
                     .0,
-                2
+                [255; 3]
             );
             assert_eq!(
                 abc_storage

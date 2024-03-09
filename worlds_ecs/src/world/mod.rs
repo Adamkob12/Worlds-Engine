@@ -4,7 +4,7 @@ use crate::{
     archetype::Archetype,
     entity::{EntityId, EntityMeta},
     prelude::{ArchFilter, ArchQuery, Bundle, Component},
-    tag::{Tag, TagFactory, TagTracker},
+    tag::{TagFactory, TagTracker},
 };
 
 /// Module responsible for any data that can be stored in the World.

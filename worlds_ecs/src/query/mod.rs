@@ -70,7 +70,8 @@ mod tests {
         });
 
         let query_results = world.query::<(&C, &B)>();
-        query_results.for_each(|(_, B(name))| {
+        query_results.for_each(|(C(x), B(name))| {
+            assert_ne!(*x, 0);
             assert_eq!(*name, "BOO!");
         });
         assert_eq!(world.get_component::<B>(alice2).unwrap().0, "BOO!");

@@ -16,6 +16,15 @@ pub struct TagTracker {
     factory: Arc<TagFactory>,
 }
 
+impl Clone for TagTracker {
+    fn clone(&self) -> Self {
+        Self {
+            tags: Arc::clone(&self.tags),
+            factory: Arc::clone(&self.factory),
+        }
+    }
+}
+
 impl Default for TagFactory {
     fn default() -> Self {
         Self {
@@ -54,34 +63,35 @@ impl TagFactory {
 }
 
 impl TagTracker {
-    /// Set this [`Tag`] as present in this tracker, without checking whether it exists.
+    /// Set this [`Tag`] as present.
+    /// # Safety
+    /// The caller must ensure that:
+    /// - The tag is registered.
+    /// - No other [`TagTracker`]s of the same entity are being accessed.
     pub unsafe fn tag_unchecked<T: Tag>(&mut self) {
         let id = self.factory.tag_id_unchecked::<T>();
         Arc::get_mut_unchecked(&mut self.tags)[id as usize] = true;
     }
 
-    /// Set this [`Tag`] as present in this tracker.
-    pub fn untag<T: Tag>(&mut self) {
-        let id = self.factory.tag_id::<T>().unwrap();
-        self.tags[id as usize] = false;
-    }
-
-    /// Set this [`Tag`] as present in this tracker, without checking whether it exists.
+    /// Set this [`Tag`] as not present.
+    /// # Safety
+    /// The caller must ensure that:
+    /// - The tag is registered.
+    /// - No other [`TagTracker`]s of the same entity are being accessed.
     pub unsafe fn untag_unchecked<T: Tag>(&mut self) {
         let id = self.factory.tag_id_unchecked::<T>();
-        self.tags[id as usize] = false;
+        Arc::get_mut_unchecked(&mut self.tags)[id as usize] = false;
     }
 
-    /// Toggle this [`Tag`], if it is present, remove it, otherwise add it.
-    pub fn toggle<T: Tag>(&mut self) {
-        let id = self.factory.tag_id::<T>().unwrap();
-        self.tags[id as usize] = !self.tags[id as usize];
-    }
-
-    /// Toggle this [`Tag`], if it is present, remove it, otherwise add it. without checking whether it exists.
+    /// Toggle this [`Tag`]. (If it is present, remove it; if it is not present, add it.)
+    /// # Safety
+    /// The caller must ensure that:
+    /// - The tag is registered.
+    /// - No other [`TagTracker`]s of the same entity are being accessed.
     pub unsafe fn toggle_unchecked<T: Tag>(&mut self) {
         let id = self.factory.tag_id_unchecked::<T>();
-        self.tags[id as usize] = !self.tags[id as usize];
+        let current = self.is_tagged::<T>();
+        Arc::get_mut_unchecked(&mut self.tags)[id as usize] = !current;
     }
 
     /// Check if this [`Tag`] is registered.
@@ -102,7 +112,12 @@ impl TagTracker {
     }
 
     /// Remove all tags from this tracker.
-    pub fn untag_all(&mut self) {
-        self.tags.iter_mut().for_each(|tag| *tag = false);
+    /// # Safety
+    /// The caller must ensure that:
+    /// - No other [`TagTracker`]s of the same entity are being accessed.
+    pub unsafe fn untag_all(&mut self) {
+        Arc::get_mut_unchecked(&mut self.tags)
+            .iter_mut()
+            .for_each(|tag| *tag = false);
     }
 }
