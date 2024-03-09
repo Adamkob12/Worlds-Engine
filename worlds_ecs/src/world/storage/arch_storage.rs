@@ -108,7 +108,11 @@ impl ArchStorage {
     ///     - The raw data (`raw_comp`) matches the component's `Layout` (the same safety requirements
     ///       that are needed when using [`BlobVec::push`])
     ///     - The component is part of the archetypes (Components of this type are stored in [`Self`])
-    unsafe fn store_component_unchecked(&mut self, comp_id: ComponentId, raw_comp: OwningPtr<'_>) {
+    pub unsafe fn store_component_unchecked(
+        &mut self,
+        comp_id: ComponentId,
+        raw_comp: OwningPtr<'_>,
+    ) {
         self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()].push(raw_comp)
     }
 
