@@ -7,6 +7,10 @@ pub fn derive_component(input: TokenStream) -> proc_macro::TokenStream {
     core::derive_component(input)
 }
 
+#[proc_macro_derive(Tag)]
+pub fn derive_tag(input: TokenStream) -> proc_macro::TokenStream {
+    core::derive_tag(input)
+}
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                                      MACRO UTILS
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

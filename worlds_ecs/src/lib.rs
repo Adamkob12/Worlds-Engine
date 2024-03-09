@@ -28,7 +28,8 @@ pub mod prelude {
     pub use super::component::*;
     pub use super::query::*;
     pub use super::storage;
+    pub use super::tag::*;
     pub use super::world::data::*;
     pub use super::world::World;
-    pub use worlds_derive::Component;
+    pub use worlds_derive::{Component, Tag};
 }

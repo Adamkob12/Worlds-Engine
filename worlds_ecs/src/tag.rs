@@ -68,7 +68,7 @@ impl TagTracker {
     /// The caller must ensure that:
     /// - The tag is registered.
     /// - No other [`TagTracker`]s of the same entity are being accessed.
-    pub unsafe fn tag_unchecked<T: Tag>(&mut self) {
+    pub unsafe fn tag<T: Tag>(&mut self) {
         let id = self.factory.tag_id_unchecked::<T>();
         Arc::get_mut_unchecked(&mut self.tags)[id as usize] = true;
     }
@@ -78,7 +78,7 @@ impl TagTracker {
     /// The caller must ensure that:
     /// - The tag is registered.
     /// - No other [`TagTracker`]s of the same entity are being accessed.
-    pub unsafe fn untag_unchecked<T: Tag>(&mut self) {
+    pub unsafe fn untag<T: Tag>(&mut self) {
         let id = self.factory.tag_id_unchecked::<T>();
         Arc::get_mut_unchecked(&mut self.tags)[id as usize] = false;
     }
@@ -100,7 +100,10 @@ impl TagTracker {
     }
 
     /// Check if this [`Tag`] is present in this tracker.
-    pub fn is_tagged<T: Tag>(&self) -> bool {
+    /// # Safety
+    /// The caller must ensure that:
+    /// - No other [`TagTracker`]s of the same entity are being mutated.
+    pub unsafe fn is_tagged<T: Tag>(&self) -> bool {
         let id = self.factory.tag_id::<T>().unwrap();
         self.tags[id as usize]
     }
@@ -119,5 +122,55 @@ impl TagTracker {
         Arc::get_mut_unchecked(&mut self.tags)
             .iter_mut()
             .for_each(|tag| *tag = false);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+
+    #[derive(Tag)]
+    struct Flying;
+
+    #[derive(Tag)]
+    struct HasWings;
+
+    #[derive(Component)]
+    struct Bird(&'static str);
+
+    #[derive(Component)]
+    struct FlyingSpeed(f32);
+
+    #[test]
+    fn test_tags() {
+        let mut tagf = TagFactory::default();
+        tagf.register_tag::<Flying>();
+        tagf.register_tag::<HasWings>();
+
+        let mut world = World::with_tags(tagf);
+
+        let eagle = world.spawn((Bird("Eagle"), FlyingSpeed(10.0)));
+
+        let mut eagle_tracker = world.get_tag_tracker(eagle);
+
+        unsafe {
+            eagle_tracker.tag::<Flying>();
+            eagle_tracker.tag::<HasWings>();
+        }
+
+        unsafe {
+            assert!(eagle_tracker.is_tagged::<Flying>());
+            assert!(eagle_tracker.is_tagged::<HasWings>());
+        }
+
+        unsafe {
+            eagle_tracker.untag::<Flying>();
+            eagle_tracker.untag_all();
+        }
+
+        unsafe {
+            assert!(!eagle_tracker.is_tagged::<Flying>());
+            assert!(!eagle_tracker.is_tagged::<HasWings>());
+        }
     }
 }
