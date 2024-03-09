@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 worlds_ecs = { path = "../../worlds_ecs" }
-bevy_ecs = "0.13"
+bevy_ecs_13 = { package = "bevy_ecs", version = "0.13" }
+bevy_ecs_1 = { package = "bevy_ecs", version = "0.1" }
