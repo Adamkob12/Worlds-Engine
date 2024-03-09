@@ -1,4 +1,4 @@
 /target
 Cargo.lock
 
-benchmarks/*/target
+benchmarks/ecs/target
