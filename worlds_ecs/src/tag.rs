@@ -172,5 +172,20 @@ mod tests {
             assert!(!eagle_tracker.is_tagged::<Flying>());
             assert!(!eagle_tracker.is_tagged::<HasWings>());
         }
+
+        unsafe {
+            eagle_tracker.tag::<Flying>();
+            assert!(eagle_tracker.is_tagged::<Flying>());
+        }
+
+        world.despawn(eagle);
+
+        unsafe {
+            assert!(!eagle_tracker.is_tagged::<Flying>());
+            assert!(!eagle_tracker.is_tagged::<HasWings>());
+        }
     }
+
+    #[test]
+    fn test_tags_query() {}
 }

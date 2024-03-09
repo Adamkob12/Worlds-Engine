@@ -13,6 +13,10 @@ pub struct Or<T>(PhantomData<T>);
 
 pub struct Has<T>(PhantomData<T>);
 
+pub struct Tagged<T>(PhantomData<T>);
+
+pub struct Untagged<T>(PhantomData<T>);
+
 pub unsafe trait ArchFilter
 where
     Self: Sized,
