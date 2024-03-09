@@ -1,6 +1,6 @@
 use crate::{archetype::Archetype, prelude::ComponentFactory, utils::prime_key::PrimeArchKey};
 
-use super::arch_storage::ArchStorage;
+use super::{arch_storage::ArchStorage, ArchEntityStorage};
 
 /// A data structure to keep track of all the storages in the world, and their information.
 // TODO: Better docs
@@ -12,7 +12,7 @@ pub struct StorageFactory {
 /// All the [`ArchStorage`]s in the [`World`](crate::prelude::World)
 #[derive(Default)]
 pub struct ArchStorages {
-    storages: Vec<ArchStorage>,
+    storages: Vec<ArchEntityStorage>,
     pkeys: Vec<PrimeArchKey>,
 }
 
@@ -23,12 +23,12 @@ pub struct ArchStorageId(pub(crate) usize);
 
 impl ArchStorages {
     /// Get a shared reference to an [`ArchStorage`] from its [`ArchStorageId`]
-    pub fn get_storage(&self, id: ArchStorageId) -> Option<&ArchStorage> {
+    pub fn get_storage(&self, id: ArchStorageId) -> Option<&ArchEntityStorage> {
         self.storages.get(id.0)
     }
 
     /// Get an exclusive reference to an [`ArchStorage`] from its [`ArchStorageId`]
-    pub fn get_storage_mut(&mut self, id: ArchStorageId) -> Option<&mut ArchStorage> {
+    pub fn get_storage_mut(&mut self, id: ArchStorageId) -> Option<&mut ArchEntityStorage> {
         self.storages.get_mut(id.0)
     }
 
@@ -38,12 +38,18 @@ impl ArchStorages {
     }
 
     /// Get an exclusive reference to an [`ArchStorage`] from its [`ArchStorageId`], without doing any bounds checking
-    pub unsafe fn get_storage_mut_unchecked(&mut self, id: ArchStorageId) -> &mut ArchStorage {
+    pub unsafe fn get_storage_mut_unchecked(
+        &mut self,
+        id: ArchStorageId,
+    ) -> &mut ArchEntityStorage {
         self.storages.get_unchecked_mut(id.0)
     }
 
     /// Get the [`ArchStorage`]s that stores archetypes with the exact same [`PrimeArchKey`]
-    pub fn get_storage_with_exact_archetype(&self, pkey: PrimeArchKey) -> Option<&ArchStorage> {
+    pub fn get_storage_with_exact_archetype(
+        &self,
+        pkey: PrimeArchKey,
+    ) -> Option<&ArchEntityStorage> {
         self.pkeys
             .iter()
             .zip(&self.storages)
@@ -54,7 +60,7 @@ impl ArchStorages {
     pub fn get_mut_storage_with_exact_archetype(
         &mut self,
         pkey: PrimeArchKey,
-    ) -> Option<&mut ArchStorage> {
+    ) -> Option<&mut ArchEntityStorage> {
         self.pkeys
             .iter_mut()
             .zip(&mut self.storages)
@@ -66,7 +72,7 @@ impl ArchStorages {
     pub fn get_mut_or_create_storage_with_exact_archetype<A: Archetype>(
         &mut self,
         comp_factory: &mut ComponentFactory,
-    ) -> (ArchStorageId, &mut ArchStorage) {
+    ) -> (ArchStorageId, &mut ArchEntityStorage) {
         let pkey = A::get_prime_key_or_register(comp_factory);
         for i in 0..self.storages.len() {
             if self.pkeys[i].is_exact_archetype(pkey) {
@@ -85,7 +91,7 @@ impl ArchStorages {
     pub fn iter_storages_with_matching_archetype(
         &self,
         pkey: PrimeArchKey,
-    ) -> impl Iterator<Item = &ArchStorage> + '_ {
+    ) -> impl Iterator<Item = &ArchEntityStorage> + '_ {
         self.pkeys
             .iter()
             .zip(&self.storages)
@@ -100,7 +106,7 @@ impl ArchStorages {
     pub fn iter_storages_with_matching_archetype_mut(
         &mut self,
         pkey: PrimeArchKey,
-    ) -> impl Iterator<Item = &mut ArchStorage> + '_ {
+    ) -> impl Iterator<Item = &mut ArchEntityStorage> + '_ {
         self.pkeys
             .iter_mut()
             .zip(&mut self.storages)
@@ -140,7 +146,7 @@ impl ArchStorages {
         comp_factory: &ComponentFactory,
     ) -> ArchStorageId {
         self.storages
-            .push(ArchStorage::new::<A>(comp_factory).unwrap_unchecked());
+            .push(ArchEntityStorage::new::<A>(comp_factory).unwrap_unchecked());
         let pkey = A::prime_key(comp_factory).unwrap_unchecked();
         self.pkeys.push(pkey);
         ArchStorageId(self.pkeys.len() - 1)

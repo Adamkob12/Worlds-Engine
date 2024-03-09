@@ -2,10 +2,7 @@ use super::query_filter::{ArchFilter, FilterResult};
 use crate::{
     prelude::{Component, ComponentFactory},
     utils::prime_key::PrimeArchKey,
-    world::storage::{
-        arch_storage::{ArchStorage, ArchStorageIndex},
-        storages::ArchStorages,
-    },
+    world::storage::{arch_storage::ArchStorageIndex, storages::ArchStorages, ArchEntityStorage},
 };
 use worlds_derive::all_tuples;
 
@@ -18,7 +15,7 @@ pub unsafe trait ArchQuery {
     /// (as specified in [`ArchStorage::get_component_unchecked`]).
     ///   2) The caller must ensure that the raw pointer to [`ArchStorage`] is valid, and usable.
     unsafe fn fetch<'a>(
-        arch_storage: *mut ArchStorage,
+        arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> Self::Item<'a>;
@@ -70,7 +67,7 @@ unsafe impl<C: Component> ArchQuery for &C {
     type Item<'a> = &'a C;
 
     unsafe fn fetch<'a>(
-        arch_storage: *mut ArchStorage,
+        arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> Self::Item<'a> {
@@ -99,7 +96,7 @@ unsafe impl<C: Component> ArchQuery for &mut C {
     type Item<'a> = &'a mut C;
 
     unsafe fn fetch<'a>(
-        arch_storage: *mut ArchStorage,
+        arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> Self::Item<'a> {
@@ -128,7 +125,7 @@ unsafe impl<C: Component> ArchQuery for Option<&mut C> {
     type Item<'a> = Option<&'a mut C>;
 
     unsafe fn fetch<'a>(
-        arch_storage: *mut ArchStorage,
+        arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> Self::Item<'a> {
@@ -147,7 +144,7 @@ unsafe impl<C: Component> ArchQuery for Option<&C> {
     type Item<'a> = Option<&'a C>;
 
     unsafe fn fetch<'a>(
-        arch_storage: *mut ArchStorage,
+        arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> Self::Item<'a> {
@@ -175,7 +172,7 @@ macro_rules! impl_comp_query_for_tuple {
             type Item<'a> = ($($name::Item<'a>,)*);
 
             unsafe fn fetch<'a>(
-                arch_storage: *mut ArchStorage,
+                arch_storage: *mut ArchEntityStorage,
                 index: ArchStorageIndex,
                 comp_factory: &'a ComponentFactory,
             ) -> Self::Item<'a> {

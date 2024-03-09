@@ -66,13 +66,12 @@ impl World {
             .storages
             .arch_storages
             .get_mut_or_create_storage_with_exact_archetype::<B>(&mut self.components);
-        let index = storage
-            .store_bundle(&self.components, bundle)
-            .expect("Coudln't store bundle");
+        let index = storage.next_index();
         let entity_id = self.entities.new_entity(EntityMeta {
             archetype_storage_id: sid,
             archetype_storage_index: index,
         });
+        storage.store_entity(entity_id, bundle, &self.components);
         entity_id
     }
 

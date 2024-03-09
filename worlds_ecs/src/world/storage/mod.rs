@@ -1,14 +1,11 @@
-use std::ops::Deref;
-
-use bevy_ptr::PtrMut;
-
+use self::arch_storage::{ArchStorage, ArchStorageIndex};
 use crate::{
     archetype::Archetype,
     entity::EntityId,
     prelude::{Bundle, ComponentFactory, ComponentId},
 };
-
-use self::arch_storage::{ArchStorage, ArchStorageIndex};
+use bevy_ptr::PtrMut;
+use std::ops::Deref;
 
 /// Defining a data-structures to store a bundle of components, a.k.a archetype storage.
 pub mod arch_storage;
@@ -41,14 +38,19 @@ impl ArchEntityStorage {
         })
     }
 
+    /// Get the next index. As in, if a new entity were to be stored right now, that index it would get.
+    pub fn next_index(&self) -> ArchStorageIndex {
+        ArchStorageIndex(self.len())
+    }
+
     /// Store an entity in the storage, with a [`Bundle`] of components, and return its index.
     pub fn store_entity<B: Bundle + Archetype>(
         &mut self,
-        entity: EntityId,
+        entity_id: EntityId,
         bundle: B,
         compf: &ComponentFactory,
     ) -> Option<ArchStorageIndex> {
-        self.entities.push(entity);
+        self.entities.push(entity_id);
         self.arch_storage.store_bundle(compf, bundle)
     }
 

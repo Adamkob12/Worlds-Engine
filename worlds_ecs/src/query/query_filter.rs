@@ -2,7 +2,7 @@ use super::arch_query::ArchQuery;
 use crate::{
     archetype::Archetype,
     prelude::ComponentFactory,
-    world::storage::arch_storage::{ArchStorage, ArchStorageIndex},
+    world::storage::{arch_storage::ArchStorageIndex, ArchEntityStorage},
 };
 use std::marker::PhantomData;
 use worlds_derive::all_tuples;
@@ -22,7 +22,7 @@ where
     /// (as specified in [`ArchStorage::get_component_unchecked`]).
     ///   2) The caller must ensure that the raw pointer to [`ArchStorage`] is valid, and usable.
     unsafe fn filter<'a>(
-        arch_storage: *const ArchStorage,
+        arch_storage: *const ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> impl FilterResult;
@@ -54,7 +54,7 @@ unsafe impl<Q: ArchFilter> ArchQuery for Not<Q> {
     type Item<'a> = bool;
 
     unsafe fn fetch<'a>(
-        arch_storage: *mut ArchStorage,
+        arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> bool {
@@ -66,7 +66,7 @@ unsafe impl<Q: ArchFilter> ArchQuery for Or<Q> {
     type Item<'a> = bool;
 
     unsafe fn fetch<'a>(
-        arch_storage: *mut ArchStorage,
+        arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> bool {
@@ -78,7 +78,7 @@ unsafe impl<A: Archetype> ArchQuery for Has<A> {
     type Item<'a> = bool;
 
     unsafe fn fetch<'a>(
-        arch_storage: *mut ArchStorage,
+        arch_storage: *mut ArchEntityStorage,
         _index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> bool {
@@ -98,11 +98,11 @@ where
     for<'a> Q::Item<'a>: FilterResult,
 {
     unsafe fn filter<'a>(
-        arch_storage: *const ArchStorage,
+        arch_storage: *const ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
     ) -> impl FilterResult {
-        Q::fetch(arch_storage as *mut ArchStorage, index, comp_factory)
+        Q::fetch(arch_storage as *mut ArchEntityStorage, index, comp_factory)
     }
 }
 
