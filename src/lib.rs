@@ -1,3 +1,3 @@
-//! The Red-Flower Game Engine
+//! The Worlds Game Engine
 
 #![deny(missing_docs)]

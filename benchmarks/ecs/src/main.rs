@@ -18,6 +18,18 @@ struct C(usize);
 #[derive(Component, bevy13::Component)]
 struct D(usize);
 
+#[derive(Component, bevy13::Component)]
+struct E(usize);
+
+#[derive(Component, bevy13::Component)]
+struct F(usize);
+
+#[derive(Component, bevy13::Component)]
+struct G(usize);
+
+#[derive(Component, bevy13::Component)]
+struct H(usize);
+
 fn main() {
     let mut bevy_world = bevy13::World::default();
     let mut world = World::default();
@@ -50,7 +62,7 @@ fn compare_spawning_entities(
          "Spawn bench 1"
     }
 
-    // Spawn Bench 1
+    // Spawn Bench 2
     compare_code_blocks! {
         { (0..amount_to_spawn).for_each(|i| {
             bevy_world.spawn((B(i), D(i)));
@@ -63,6 +75,21 @@ fn compare_spawning_entities(
         })},
 
          "Spawn bench 2"
+    }
+
+    // Spawn Bench 3
+    compare_code_blocks! {
+        { (0..amount_to_spawn).for_each(|_| {
+            bevy_world.spawn((A(0), B(0), C(0), D(0), E(0), F(0), G(0), H(0)));
+        }) },
+        { (0..amount_to_spawn).for_each(|_| {
+            bevy_world.spawn((A(0), B(0), C(0), D(0), E(0), F(0), G(0), H(0)));
+        }) },
+         { (0..amount_to_spawn).for_each(|_| {
+            world.spawn((A(0), B(0), C(0), D(0), E(0), F(0), G(0), H(0)));
+        })},
+
+         "Spawn bench 3"
     }
 }
 
