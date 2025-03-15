@@ -1,3 +1,4 @@
 //! The Worlds Game Engine
 
-#![deny(missing_docs)]
+pub use worlds_ecs::prelude::*;
+

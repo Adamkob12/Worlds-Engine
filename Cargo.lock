@@ -1359,6 +1359,9 @@ dependencies = [
 [[package]]
 name = "worlds"
 version = "0.1.0"
+dependencies = [
+ "worlds_ecs",
+]
 
 [[package]]
 name = "worlds_derive"

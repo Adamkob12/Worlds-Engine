@@ -6,6 +6,7 @@ description = "The Worlds Game Engine"
 license = "MIT"
 
 [dependencies]
+worlds_ecs = { path = "worlds_ecs"}
 
 [workspace]
 resolver = "2"
