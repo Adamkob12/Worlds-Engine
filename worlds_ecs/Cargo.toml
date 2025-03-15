@@ -2,11 +2,13 @@
 name = "worlds_ecs"
 version = "0.1.0"
 edition = "2024"
+description = "ECS Crate for Worlds Game Engine"
+license = "MIT"
 
 [dependencies]
 bevy_ptr = "0.15"
 primitive-types = "0.13"
-worlds_derive = { path = "../worlds_derive", version = "0.1" }
+worlds_derive = "0.1"
 smallvec = "1.14"
 
 [features]

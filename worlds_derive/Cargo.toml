@@ -2,6 +2,8 @@
 name = "worlds_derive"
 version = "0.1.0"
 edition = "2024"
+description = "Derive crate for Worlds Engine"
+license = "MIT"
 
 [lib]
 proc-macro = true

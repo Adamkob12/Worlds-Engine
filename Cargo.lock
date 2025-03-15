@@ -395,7 +395,7 @@ version = "0.1.0"
 dependencies = [
  "bevy_ecs 0.1.3",
  "bevy_ecs 0.13.2",
- "worlds_ecs",
+ "worlds_ecs 0.1.0",
 ]
 
 [[package]]
@@ -1360,12 +1360,22 @@ dependencies = [
 name = "worlds"
 version = "0.1.1"
 dependencies = [
- "worlds_ecs",
+ "worlds_ecs 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "worlds_derive"
 version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.100",
+]
+
+[[package]]
+name = "worlds_derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "891868257c8ece19d90c12a6519c1687ad209fb4cfbaa8870f9378cccb28f62d"
 dependencies = [
  "quote",
  "syn 2.0.100",
@@ -1378,7 +1388,19 @@ dependencies = [
  "bevy_ptr 0.15.3",
  "primitive-types",
  "smallvec",
- "worlds_derive",
+ "worlds_derive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "worlds_ecs"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab5a9caa31d04b45ce0ec2c0ab2e5e75341df70676e6db9237f0a59c5664efa9"
+dependencies = [
+ "bevy_ptr 0.15.3",
+ "primitive-types",
+ "smallvec",
+ "worlds_derive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
