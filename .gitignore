@@ -1,5 +1,4 @@
 /target
-Cargo.lock
 .idea
 
 benchmarks/ecs/target
