@@ -49,9 +49,9 @@ impl TagStorage {
     }
 
     /// Get the [`TagTracker`] of an entity, without checking if the entity exists.
-    pub unsafe fn get_tag_tracker_unchecked(&self, entity: EntityId) -> TagTracker {
+    pub unsafe fn get_tag_tracker_unchecked(&self, entity: EntityId) -> TagTracker { unsafe {
         self.tag_trackers
             .get_unchecked(entity.id() as usize)
             .clone()
-    }
+    }}
 }

@@ -92,13 +92,13 @@ impl ArchStorage {
         &mut self,
         comp_factory: &ComponentFactory,
         bundle: B,
-    ) -> ArchStorageIndex {
+    ) -> ArchStorageIndex { unsafe {
         bundle.raw_components_scope(comp_factory, &mut |comp_id, raw_comp| {
             self.store_component_unchecked(comp_id, raw_comp)
         });
         self.len += 1;
         ArchStorageIndex(self.len - 1)
-    }
+    }}
 
     /// Store a single component in its matching [`BlobVec`].
     /// # Safety
@@ -112,9 +112,9 @@ impl ArchStorage {
         &mut self,
         comp_id: ComponentId,
         raw_comp: OwningPtr<'_>,
-    ) {
+    ) { unsafe {
         self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()].push(raw_comp)
-    }
+    }}
 
     /// Get a type-erased reference to a pointer, from its index and [`ComponentId`].
     pub fn get_component(&self, index: ArchStorageIndex, comp_id: ComponentId) -> Option<Ptr<'_>> {
@@ -133,10 +133,10 @@ impl ArchStorage {
         &self,
         index: ArchStorageIndex,
         comp_id: ComponentId,
-    ) -> Ptr<'_> {
+    ) -> Ptr<'_> { unsafe {
         self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()]
             .get_unchecked(index.0)
-    }
+    }}
 
     /// Get a type-erased mutable reference to a pointer, from its index and [`ComponentId`].
     /// Retuns `None` if the index is out of bounds, or if the component is not stored in this storage.
@@ -162,10 +162,10 @@ impl ArchStorage {
         &mut self,
         index: ArchStorageIndex,
         comp_id: ComponentId,
-    ) -> PtrMut<'_> {
+    ) -> PtrMut<'_> { unsafe {
         self.comp_storage[*self.comp_indexes.get(&comp_id).unwrap_unchecked()]
             .get_mut_unchecked(index.0)
-    }
+    }}
 
     /// Iterate over all the indices in this storage.
     pub fn iter_indices(&self) -> impl Iterator<Item = ArchStorageIndex> + use<> {
@@ -176,12 +176,12 @@ impl ArchStorage {
     /// components corresponding to the given index are removed.
     /// # Safety
     /// It is the caller responsibility to ensure that the index is in bounds.
-    pub unsafe fn swap_remove_unchecked(&mut self, index: ArchStorageIndex) {
+    pub unsafe fn swap_remove_unchecked(&mut self, index: ArchStorageIndex) { unsafe {
         self.comp_storage
             .iter_mut()
             .for_each(|bvec| bvec.swap_remove_and_drop_unchecked(index.0));
         self.len -= 1;
-    }
+    }}
 }
 
 #[cfg(test)]

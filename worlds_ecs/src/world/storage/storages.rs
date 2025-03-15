@@ -34,17 +34,17 @@ impl ArchStorages {
     }
 
     /// Get a shared reference to an [`ArchStorage`] from its [`ArchStorageId`], without doing any bounds checking
-    pub unsafe fn get_storage_unchecked(&self, id: ArchStorageId) -> &ArchStorage {
+    pub unsafe fn get_storage_unchecked(&self, id: ArchStorageId) -> &ArchStorage { unsafe {
         self.storages.get_unchecked(id.0)
-    }
+    }}
 
     /// Get an exclusive reference to an [`ArchStorage`] from its [`ArchStorageId`], without doing any bounds checking
     pub unsafe fn get_storage_mut_unchecked(
         &mut self,
         id: ArchStorageId,
-    ) -> &mut ArchEntityStorage {
+    ) -> &mut ArchEntityStorage { unsafe {
         self.storages.get_unchecked_mut(id.0)
-    }
+    }}
 
     /// Get the [`ArchStorage`]s that stores archetypes with the exact same [`PrimeArchKey`]
     pub fn get_storage_with_exact_archetype(
@@ -145,11 +145,11 @@ impl ArchStorages {
     pub unsafe fn store_new_archetype_unchecked<A: Archetype>(
         &mut self,
         comp_factory: &ComponentFactory,
-    ) -> ArchStorageId {
+    ) -> ArchStorageId { unsafe {
         self.storages
             .push(ArchEntityStorage::new::<A>(comp_factory).unwrap_unchecked());
         let pkey = A::prime_key(comp_factory).unwrap_unchecked();
         self.pkeys.push(pkey);
         ArchStorageId(self.pkeys.len() - 1)
-    }
+    }}
 }

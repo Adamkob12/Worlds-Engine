@@ -59,13 +59,13 @@ impl ComponentFactory {
         &mut self,
         type_id: TypeId,
         data_info: DataInfo,
-    ) -> Option<ComponentId> {
+    ) -> Option<ComponentId> { unsafe {
         if self.is_type_registered(type_id) {
             return self.get_component_id_from_type_id(type_id);
         }
         (self.components.len() < MAX_COMPONENTS)
             .then_some(self.register_component_from_data_unchecked(type_id, data_info))
-    }
+    }}
 
     /// Register a new component like [`Self::register_component_from_data`] without checking whether this
     /// component is already registered, and whether the [`maximum amount of components`](MAX_COMPONENTS) has been reached.
@@ -141,12 +141,12 @@ impl ComponentFactory {
     ///
     /// The caller must ensure that the [`DataInfo`] that is stored for this component matces the actual
     /// memory layout of this component, and that `DataInfo::drop_fn()` is safe to call with an [`OwningPtr`]  to the component.
-    pub unsafe fn new_component_storage(&self, comp_id: ComponentId) -> Option<BlobVec> {
+    pub unsafe fn new_component_storage(&self, comp_id: ComponentId) -> Option<BlobVec> { unsafe {
         Some(BlobVec::new_for_data(
             self.get_component_info_from_component_id(comp_id)?,
             1,
         ))
-    }
+    }}
 }
 
 #[cfg(test)]

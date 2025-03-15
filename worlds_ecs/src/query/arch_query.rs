@@ -26,7 +26,7 @@ pub unsafe trait ArchQuery {
     unsafe fn iter_query_matches<'a>(
         arch_storages: *mut ArchStorages,
         comp_factory: &'a ComponentFactory,
-    ) -> impl Iterator<Item = Self::Item<'a>> + 'a {
+    ) -> impl Iterator<Item = Self::Item<'a>> + 'a { unsafe {
         let mut pkey = PrimeArchKey::IDENTITY;
         Self::merge_prime_arch_key_with(&mut pkey, comp_factory);
         (*arch_storages)
@@ -38,14 +38,14 @@ pub unsafe trait ArchQuery {
                     .map(|index| unsafe { Self::fetch(arch_storage, index, comp_factory) })
             })
             .flatten()
-    }
+    }}
 
     /// # Safety
     ///  1) The caller must ensure that the raw pointer to [`ArchStorages`] is valid, and usable.
     unsafe fn iter_filtered_query_matches<F: ArchFilter>(
         arch_storages: *mut ArchStorages,
         comp_factory: &ComponentFactory,
-    ) -> impl Iterator<Item=Self::Item<'_>>  {
+    ) -> impl Iterator<Item=Self::Item<'_>>  { unsafe {
         let mut pkey = PrimeArchKey::IDENTITY;
         Self::merge_prime_arch_key_with(&mut pkey, comp_factory);
         (*arch_storages)
@@ -61,7 +61,7 @@ pub unsafe trait ArchQuery {
                     })
             })
             .flatten()
-    }
+    }}
 }
 
 unsafe impl<C: Component> ArchQuery for &C {
@@ -71,7 +71,7 @@ unsafe impl<C: Component> ArchQuery for &C {
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &ComponentFactory,
-    ) -> Self::Item<'_> {
+    ) -> Self::Item<'_> { unsafe {
         (*arch_storage)
             .get_component_unchecked(
                 index,
@@ -80,7 +80,7 @@ unsafe impl<C: Component> ArchQuery for &C {
                     .expect("Can't query unregistered component"),
             )
             .deref::<C>()
-    }
+    }}
 
     fn merge_prime_arch_key_with(pkey: &mut PrimeArchKey, comp_factory: &ComponentFactory) {
         pkey.merge_with_but_panic_if_already_merged(
@@ -100,7 +100,7 @@ unsafe impl<C: Component> ArchQuery for &mut C {
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &ComponentFactory,
-    ) -> Self::Item<'_> {
+    ) -> Self::Item<'_> { unsafe {
         (*arch_storage)
             .get_component_mut_unchecked(
                 index,
@@ -109,7 +109,7 @@ unsafe impl<C: Component> ArchQuery for &mut C {
                     .expect("Can't query unregistered component"),
             )
             .deref_mut::<C>()
-    }
+    }}
 
     fn merge_prime_arch_key_with(pkey: &mut PrimeArchKey, comp_factory: &ComponentFactory) {
         pkey.merge_with_but_panic_if_already_merged(
@@ -129,7 +129,7 @@ unsafe impl<C: Component> ArchQuery for Option<&mut C> {
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &ComponentFactory,
-    ) -> Self::Item<'_> {
+    ) -> Self::Item<'_> { unsafe {
         (*arch_storage)
             .get_component_mut(
                 index,
@@ -138,7 +138,7 @@ unsafe impl<C: Component> ArchQuery for Option<&mut C> {
                     .expect("Can't query unregistered component"),
             )
             .map(|c| c.deref_mut::<C>())
-    }
+    }}
 }
 
 unsafe impl<C: Component> ArchQuery for Option<&C> {
@@ -148,7 +148,7 @@ unsafe impl<C: Component> ArchQuery for Option<&C> {
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &ComponentFactory,
-    ) -> Self::Item<'_> {
+    ) -> Self::Item<'_> { unsafe {
         (*arch_storage)
             .get_component(
                 index,
@@ -157,7 +157,7 @@ unsafe impl<C: Component> ArchQuery for Option<&C> {
                     .expect("Can't query unregistered component"),
             )
             .map(|c| c.deref::<C>())
-    }
+    }}
 }
 
 unsafe impl ArchQuery for EntityId {

@@ -49,9 +49,9 @@ impl TagFactory {
     }
 
     /// Get the ID of a tag, without checking whether it exists.
-    pub unsafe fn tag_id_unchecked<T: Tag>(&self) -> u32 {
+    pub unsafe fn tag_id_unchecked<T: Tag>(&self) -> u32 { unsafe {
         *self.tag_id_map.get(&TypeId::of::<T>()).unwrap_unchecked()
-    }
+    }}
 
     /// Produce a new [`TagTracker`] to track which tags are present on an entity.
     pub fn new_tracker(this: &Arc<TagFactory>) -> TagTracker {
@@ -68,31 +68,31 @@ impl TagTracker {
     /// The caller must ensure that:
     /// - The tag is registered.
     /// - No other [`TagTracker`]s of the same entity are being accessed.
-    pub unsafe fn tag<T: Tag>(&mut self) {
+    pub unsafe fn tag<T: Tag>(&mut self) { unsafe {
         let id = self.factory.tag_id_unchecked::<T>();
         Arc::get_mut_unchecked(&mut self.tags)[id as usize] = true;
-    }
+    }}
 
     /// Set this [`Tag`] as not present.
     /// # Safety
     /// The caller must ensure that:
     /// - The tag is registered.
     /// - No other [`TagTracker`]s of the same entity are being accessed.
-    pub unsafe fn untag<T: Tag>(&mut self) {
+    pub unsafe fn untag<T: Tag>(&mut self) { unsafe {
         let id = self.factory.tag_id_unchecked::<T>();
         Arc::get_mut_unchecked(&mut self.tags)[id as usize] = false;
-    }
+    }}
 
     /// Toggle this [`Tag`]. (If it is present, remove it; if it is not present, add it.)
     /// # Safety
     /// The caller must ensure that:
     /// - The tag is registered.
     /// - No other [`TagTracker`]s of the same entity are being accessed.
-    pub unsafe fn toggle_unchecked<T: Tag>(&mut self) {
+    pub unsafe fn toggle_unchecked<T: Tag>(&mut self) { unsafe {
         let id = self.factory.tag_id_unchecked::<T>();
         let current = self.is_tagged::<T>();
         Arc::get_mut_unchecked(&mut self.tags)[id as usize] = !current;
-    }
+    }}
 
     /// Check if this [`Tag`] is registered.
     pub fn is_tag_registered<T: Tag>(&self) -> bool {
@@ -109,20 +109,20 @@ impl TagTracker {
     }
 
     /// Check if this [`Tag`] is present in this tracker, without checking whether it exists.
-    pub unsafe fn is_tagged_unchecked<T: Tag>(&self) -> bool {
+    pub unsafe fn is_tagged_unchecked<T: Tag>(&self) -> bool { unsafe {
         let id = self.factory.tag_id_unchecked::<T>();
         self.tags[id as usize]
-    }
+    }}
 
     /// Remove all tags from this tracker.
     /// # Safety
     /// The caller must ensure that:
     /// - No other [`TagTracker`]s of the same entity are being accessed.
-    pub unsafe fn untag_all(&mut self) {
+    pub unsafe fn untag_all(&mut self) { unsafe {
         Arc::get_mut_unchecked(&mut self.tags)
             .iter_mut()
             .for_each(|tag| *tag = false);
-    }
+    }}
 }
 
 #[cfg(test)]

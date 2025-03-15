@@ -61,9 +61,9 @@ unsafe impl<Q: ArchFilter> ArchQuery for Not<Q> {
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
-    ) -> bool {
+    ) -> bool { unsafe {
         !Q::filter(arch_storage, index, comp_factory).collapse()
-    }
+    }}
 }
 
 unsafe impl<Q: ArchFilter> ArchQuery for Or<Q> {
@@ -73,9 +73,9 @@ unsafe impl<Q: ArchFilter> ArchQuery for Or<Q> {
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
-    ) -> bool {
+    ) -> bool { unsafe {
         Q::filter(arch_storage, index, comp_factory).any()
-    }
+    }}
 }
 
 unsafe impl<A: Archetype> ArchQuery for Has<A> {
@@ -85,9 +85,9 @@ unsafe impl<A: Archetype> ArchQuery for Has<A> {
         arch_storage: *mut ArchEntityStorage,
         _index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
-    ) -> bool {
+    ) -> bool { unsafe {
         (*arch_storage).contains_archetype::<A>(comp_factory)
-    }
+    }}
 
     fn merge_prime_arch_key_with(
         _pkey: &mut crate::utils::prime_key::PrimeArchKey,
@@ -105,9 +105,9 @@ where
         arch_storage: *const ArchEntityStorage,
         index: ArchStorageIndex,
         comp_factory: &'a ComponentFactory,
-    ) -> impl FilterResult {
+    ) -> impl FilterResult { unsafe {
         Q::fetch(arch_storage as *mut ArchEntityStorage, index, comp_factory)
-    }
+    }}
 }
 
 macro_rules! impl_filtering_value_for_tuple {

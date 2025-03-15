@@ -19,9 +19,9 @@ pub struct DataInfo {
     drop_fn: Option<unsafe fn(OwningPtr<'_>)>,
 }
 
-unsafe fn drop_data<T: Data>(ptr: OwningPtr<'_>) {
+unsafe fn drop_data<T: Data>(ptr: OwningPtr<'_>) { unsafe {
     OwningPtr::drop_as::<T>(ptr)
-}
+}}
 
 impl DataInfo {
     /// Create a new [`DataInfo`] for a value based on its default values.

@@ -75,10 +75,10 @@ impl ArchEntityStorage {
         &mut self,
         index: ArchStorageIndex,
         comp_id: ComponentId,
-    ) -> PtrMut<'_> {
+    ) -> PtrMut<'_> { unsafe {
         self.arch_storage
             .get_component_mut_unchecked(index, comp_id)
-    }
+    }}
 
     /// Get the [`EntityId`] of the entity stored at that index.
     /// Return `None` if the index is out of bounds.
@@ -89,9 +89,9 @@ impl ArchEntityStorage {
     /// Get the [`EntityId`] of the entity stored at that index, without doing bounds checking.
     /// # Safety
     /// The caller must ensure that the `index` is valid, and within the bounds of the storage.
-    pub unsafe fn get_entity_at_unchecked(&self, index: ArchStorageIndex) -> EntityId {
+    pub unsafe fn get_entity_at_unchecked(&self, index: ArchStorageIndex) -> EntityId { unsafe {
         *self.entities.get_unchecked(index.0)
-    }
+    }}
 
     /// Swap-remove an entity and its data. This is used for despawning entities.
     /// Returns the [`EntityId`] that was last, so its [`EntityMeta`] can be updated
