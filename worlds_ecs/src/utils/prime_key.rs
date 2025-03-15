@@ -1,13 +1,13 @@
 use crate::{component::ComponentId, impl_id_struct};
-#[cfg(not(many_components))]
+#[cfg(not(feature = "many_components"))]
 use primitive_types::U256;
-#[cfg(many_components)]
+#[cfg(feature = "many_components")]
 use primitive_types::U512;
 
-#[cfg(not(many_components))]
+#[cfg(not(feature = "many_components"))]
 type PrimeNum = U256;
 
-#[cfg(many_components)]
+#[cfg(feature = "many_components")]
 type PrimeNum = U512;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -15,24 +15,18 @@ pub struct PrimeArchKey(PrimeNum);
 
 impl Default for PrimeArchKey {
     fn default() -> Self {
-        Self(U256::one())
+        Self(PrimeNum::one())
     }
 }
 
-pub const MAX_COMPONENTS: usize = {
-    if cfg!(many_components) {
-        512
-    } else {
-        256
-    }
-};
+pub const MAX_COMPONENTS: usize = if cfg!(feature = "many_components") { 512 } else { 256 } ;
 
 impl_id_struct!(PrimeArchKey, PrimeNum, pub);
 
 #[allow(unused)]
 impl PrimeArchKey {
     const PRIME_TABLE: [usize; MAX_COMPONENTS] = PRIME_NUMBERS;
-    pub const IDENTITY: PrimeArchKey = PrimeArchKey(U256::one());
+    pub const IDENTITY: PrimeArchKey = PrimeArchKey(PrimeNum::one());
 
     #[inline(always)]
     pub fn component_key(comp_id: ComponentId) -> Self {
@@ -52,7 +46,7 @@ impl PrimeArchKey {
     /// An archetype `A` is a sub-archetype of a different archetype `B` if and only if every component
     /// in `A` is also in `B`.
     pub fn is_sub_archetype(&self, other: PrimeArchKey) -> bool {
-        self.0 % other.0 == U256::zero()
+        self.0 % other.0 == PrimeNum::zero()
     }
 
     /// Return `true` if both this Key and the other key represent the same archetype. Which can
@@ -71,19 +65,19 @@ impl PrimeArchKey {
     }
 
     pub fn squared(self) -> PrimeArchKey {
-        PrimeArchKey(self.0.pow(U256::from(2)))
+        PrimeArchKey(self.0.pow(PrimeNum::from(2)))
     }
 
     /// Conversion to u64 with overflow checking
     ///
-    /// # Panics
-    /// Panics if the number is larger than u64::max_value().
+    /// # Panics    
+    ///  if the number is larger than u64::max_value().
     pub fn as_u64(&self) -> u64 {
         self.0.as_u64()
     }
 }
 
-#[cfg(not(many_components))]
+#[cfg(not(feature = "many_components"))]
 const PRIME_NUMBERS: [usize; MAX_COMPONENTS] = [
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
     101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,
@@ -102,7 +96,7 @@ const PRIME_NUMBERS: [usize; MAX_COMPONENTS] = [
     1621,
 ];
 
-#[cfg(many_components)]
+#[cfg(feature = "many_components")]
 const PRIME_NUMBERS: [usize; MAX_COMPONENTS] = [
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
     101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,
@@ -134,5 +128,5 @@ const PRIME_NUMBERS: [usize; MAX_COMPONENTS] = [
     3307, 3313, 3319, 3323, 3329, 3331, 3343, 3347, 3359, 3361, 3371, 3373, 3389, 3391, 3407, 3413,
     3433, 3449, 3457, 3461, 3463, 3467, 3469, 3491, 3499, 3511, 3517, 3527, 3529, 3533, 3539, 3541,
     3547, 3557, 3559, 3571, 3581, 3583, 3593, 3607, 3613, 3617, 3623, 3631, 3637, 3643, 3659,
-    3671.,
+    3671, 3673
 ];

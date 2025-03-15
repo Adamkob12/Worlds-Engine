@@ -4,7 +4,7 @@ use std::{any::TypeId, sync::Arc};
 /// A tag is a marker that can be added and removed from entities. It contains no data.
 pub trait Tag: 'static {}
 
-/// A data-strucutre that can be used to create and manage tags.
+/// A data-structure that can be used to create and manage tags.
 pub struct TagFactory {
     tag_id_map: TypeIdMap<u32>,
     next_id: u32,
@@ -136,9 +136,11 @@ mod tests {
     struct HasWings;
 
     #[derive(Component)]
+    #[allow(unused)]
     struct Bird(&'static str);
 
     #[derive(Component)]
+    #[allow(unused)]
     struct FlyingSpeed(f32);
 
     #[test]
