@@ -3,7 +3,7 @@ use crate::{
     entity::EntityId,
     prelude::{Component, ComponentFactory},
     utils::prime_key::PrimeArchKey,
-    world::storage::{arch_storage::ArchStorageIndex, storages::ArchStorages, ArchEntityStorage},
+    world::storage::{ArchEntityStorage, arch_storage::ArchStorageIndex, storages::ArchStorages},
 };
 use worlds_derive::all_tuples;
 
@@ -15,11 +15,11 @@ pub unsafe trait ArchQuery {
     ///   1) The caller must ensure that the [`ArchStorageIndex`] is withing the bounds of the [`ArchStorage`]
     /// (as specified in [`ArchStorage::get_component_unchecked`]).
     ///   2) The caller must ensure that the raw pointer to [`ArchStorage`] is valid, and usable.
-    unsafe fn fetch<'a>(
+    unsafe fn fetch(
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
-        comp_factory: &'a ComponentFactory,
-    ) -> Self::Item<'a>;
+        comp_factory: &ComponentFactory,
+    ) -> Self::Item<'_>;
 
     /// # Safety
     ///  1) The caller must ensure that the raw pointer to [`ArchStorages`] is valid, and usable.
@@ -42,10 +42,10 @@ pub unsafe trait ArchQuery {
 
     /// # Safety
     ///  1) The caller must ensure that the raw pointer to [`ArchStorages`] is valid, and usable.
-    unsafe fn iter_filtered_query_matches<'a, F: ArchFilter>(
+    unsafe fn iter_filtered_query_matches<F: ArchFilter>(
         arch_storages: *mut ArchStorages,
-        comp_factory: &'a ComponentFactory,
-    ) -> impl Iterator<Item = Self::Item<'a>> + 'a {
+        comp_factory: &ComponentFactory,
+    ) -> impl Iterator<Item=Self::Item<'_>>  {
         let mut pkey = PrimeArchKey::IDENTITY;
         Self::merge_prime_arch_key_with(&mut pkey, comp_factory);
         (*arch_storages)
@@ -67,11 +67,11 @@ pub unsafe trait ArchQuery {
 unsafe impl<C: Component> ArchQuery for &C {
     type Item<'a> = &'a C;
 
-    unsafe fn fetch<'a>(
+    unsafe fn fetch(
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
-        comp_factory: &'a ComponentFactory,
-    ) -> Self::Item<'a> {
+        comp_factory: &ComponentFactory,
+    ) -> Self::Item<'_> {
         (*arch_storage)
             .get_component_unchecked(
                 index,
@@ -96,11 +96,11 @@ unsafe impl<C: Component> ArchQuery for &C {
 unsafe impl<C: Component> ArchQuery for &mut C {
     type Item<'a> = &'a mut C;
 
-    unsafe fn fetch<'a>(
+    unsafe fn fetch(
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
-        comp_factory: &'a ComponentFactory,
-    ) -> Self::Item<'a> {
+        comp_factory: &ComponentFactory,
+    ) -> Self::Item<'_> {
         (*arch_storage)
             .get_component_mut_unchecked(
                 index,
@@ -125,11 +125,11 @@ unsafe impl<C: Component> ArchQuery for &mut C {
 unsafe impl<C: Component> ArchQuery for Option<&mut C> {
     type Item<'a> = Option<&'a mut C>;
 
-    unsafe fn fetch<'a>(
+    unsafe fn fetch(
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
-        comp_factory: &'a ComponentFactory,
-    ) -> Self::Item<'a> {
+        comp_factory: &ComponentFactory,
+    ) -> Self::Item<'_> {
         (*arch_storage)
             .get_component_mut(
                 index,
@@ -144,11 +144,11 @@ unsafe impl<C: Component> ArchQuery for Option<&mut C> {
 unsafe impl<C: Component> ArchQuery for Option<&C> {
     type Item<'a> = Option<&'a C>;
 
-    unsafe fn fetch<'a>(
+    unsafe fn fetch(
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
-        comp_factory: &'a ComponentFactory,
-    ) -> Self::Item<'a> {
+        comp_factory: &ComponentFactory,
+    ) -> Self::Item<'_> {
         (*arch_storage)
             .get_component(
                 index,
@@ -163,12 +163,12 @@ unsafe impl<C: Component> ArchQuery for Option<&C> {
 unsafe impl ArchQuery for EntityId {
     type Item<'a> = EntityId;
 
-    unsafe fn fetch<'a>(
+    unsafe fn fetch(
         arch_storage: *mut ArchEntityStorage,
         index: ArchStorageIndex,
-        _comp_factory: &'a ComponentFactory,
-    ) -> Self::Item<'a> {
-        (*arch_storage).get_entity_at_unchecked(index)
+        _comp_factory: &ComponentFactory,
+    ) -> Self::Item<'_> {
+        unsafe { (*arch_storage).get_entity_at_unchecked(index) }
     }
 }
 
@@ -189,7 +189,7 @@ macro_rules! impl_comp_query_for_tuple {
                 index: ArchStorageIndex,
                 comp_factory: &'a ComponentFactory,
             ) -> Self::Item<'a> {
-                ($($name::fetch(arch_storage, index, comp_factory),)*)
+                unsafe { ($($name::fetch(arch_storage, index, comp_factory),)*) }
             }
 
             fn merge_prime_arch_key_with(pkey: &mut PrimeArchKey, comp_factory: &ComponentFactory) {

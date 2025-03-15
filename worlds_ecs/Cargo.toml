@@ -1,13 +1,13 @@
 [package]
 name = "worlds_ecs"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-bevy_ptr = "0.12"
-primitive-types = "0.12"
+bevy_ptr = "0.15"
+primitive-types = "0.13"
 worlds_derive = { path = "../worlds_derive" }
-smallvec = "1.13"
+smallvec = "1.14"
 
 [features]
 default = ["many_components"]

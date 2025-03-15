@@ -5,7 +5,7 @@
 use std::mem::ManuallyDrop;
 
 use std::{
-    alloc::{handle_alloc_error, Layout},
+    alloc::{Layout, handle_alloc_error},
     cell::UnsafeCell,
     num::NonZeroUsize,
     ptr::NonNull,
@@ -121,7 +121,7 @@ impl BlobVec {
     ///
     /// [`needs_drop`]: core::mem::needs_drop
     pub unsafe fn new_for_data(data_info: &DataInfo, capacity: usize) -> BlobVec {
-        BlobVec::new(data_info.layout(), data_info.drop_fn(), capacity)
+        unsafe { BlobVec::new(data_info.layout(), data_info.drop_fn(), capacity) }
     }
 
     /// Returns the number of elements in the vector.
@@ -233,8 +233,14 @@ impl BlobVec {
     #[inline]
     pub unsafe fn initialize_unchecked(&mut self, index: usize, value: OwningPtr<'_>) {
         debug_assert!(index < self.len());
-        let ptr = self.get_mut_unchecked(index);
-        std::ptr::copy_nonoverlapping::<u8>(value.as_ptr(), ptr.as_ptr(), self.item_layout.size());
+        unsafe {
+            let ptr = self.get_mut_unchecked(index);
+            std::ptr::copy_nonoverlapping::<u8>(
+                value.as_ptr(),
+                ptr.as_ptr(),
+                self.item_layout.size(),
+            );
+        }
     }
 
     /// Replaces the value at `index` with `value`. This function does not do any bounds checking.
@@ -251,7 +257,7 @@ impl BlobVec {
 
         // Pointer to the value in the vector that will get replaced.
         // SAFETY: The caller ensures that `index` fits in this vector.
-        let destination = NonNull::from(self.get_mut_unchecked(index));
+        let destination = NonNull::from(unsafe { self.get_mut_unchecked(index) });
         let source = value.as_ptr();
 
         if let Some(drop) = self.drop {
@@ -269,13 +275,15 @@ impl BlobVec {
             //   that the element will not get observed or double dropped later.
             // - If a panic occurs, `self.len` will remain `0`, which ensures a double-drop
             //   does not occur. Instead, all elements will be forgotten.
-            let old_value = OwningPtr::new(destination);
+            let old_value = unsafe { OwningPtr::new(destination) };
 
             // This closure will run in case `drop()` panics,
             // which ensures that `value` does not get forgotten.
-            let on_unwind = OnDrop::new(|| drop(value));
+            let on_unwind = OnDrop::new(|| unsafe { drop(value) });
 
-            drop(old_value);
+            unsafe {
+                drop(old_value);
+            }
 
             // If the above code does not panic, make sure that `value` doesn't get dropped.
             core::mem::forget(on_unwind);
@@ -292,7 +300,13 @@ impl BlobVec {
         //   so it must still be initialized and it is safe to transfer ownership into the vector.
         // - `source` and `destination` were obtained from different memory locations,
         //   both of which we have exclusive access to, so they are guaranteed not to overlap.
-        std::ptr::copy_nonoverlapping::<u8>(source, destination.as_ptr(), self.item_layout.size());
+        unsafe {
+            std::ptr::copy_nonoverlapping::<u8>(
+                source,
+                destination.as_ptr(),
+                self.item_layout.size(),
+            );
+        }
     }
 
     /// Appends an element to the back of the vector.
@@ -304,7 +318,9 @@ impl BlobVec {
         self.reserve(1);
         let index = self.len;
         self.len += 1;
-        self.initialize_unchecked(index, value);
+        unsafe {
+            self.initialize_unchecked(index, value);
+        }
     }
 
     /// Forces the length of the vector to `len`.
@@ -335,11 +351,13 @@ impl BlobVec {
         let new_len = self.len - 1;
         let size = self.item_layout.size();
         if index != new_len {
-            std::ptr::swap_nonoverlapping::<u8>(
-                self.get_mut_unchecked(index).as_ptr(),
-                self.get_mut_unchecked(new_len).as_ptr(),
-                size,
-            );
+            unsafe {
+                std::ptr::swap_nonoverlapping::<u8>(
+                    self.get_mut_unchecked(index).as_ptr(),
+                    self.get_mut_unchecked(new_len).as_ptr(),
+                    size,
+                );
+            }
         }
         self.len = new_len;
         // Cannot use get_unchecked here as this is technically out of bounds after changing len.
@@ -347,7 +365,7 @@ impl BlobVec {
         // - `new_len` is less than the old len, so it must fit in this vector's allocation.
         // - `size` is a multiple of the erased type's alignment,
         //   so adding a multiple of `size` will preserve alignment.
-        self.get_ptr_mut().byte_add(new_len * size).promote()
+        unsafe { self.get_ptr_mut().byte_add(new_len * size).promote() }
     }
 
     /// Removes the value at `index` and copies the value stored into `ptr`.
@@ -360,14 +378,16 @@ impl BlobVec {
     #[inline]
     pub unsafe fn swap_remove_unchecked(&mut self, index: usize, ptr: PtrMut<'_>) {
         debug_assert!(index < self.len());
-        let last = self.get_mut_unchecked(self.len - 1).as_ptr();
-        let target = self.get_mut_unchecked(index).as_ptr();
-        // Copy the item at the index into the provided ptr
-        std::ptr::copy_nonoverlapping::<u8>(target, ptr.as_ptr(), self.item_layout.size());
-        // Recompress the storage by moving the previous last element into the
-        // now-free row overwriting the previous data. The removed row may be the last
-        // one so a non-overlapping copy must not be used here.
-        std::ptr::copy::<u8>(last, target, self.item_layout.size());
+        unsafe {
+            let last = self.get_mut_unchecked(self.len - 1).as_ptr();
+            let target = self.get_mut_unchecked(index).as_ptr();
+            // Copy the item at the index into the provided ptr
+            std::ptr::copy_nonoverlapping::<u8>(target, ptr.as_ptr(), self.item_layout.size());
+            // Recompress the storage by moving the previous last element into the
+            // now-free row overwriting the previous data. The removed row may be the last
+            // one so a non-overlapping copy must not be used here.
+            std::ptr::copy::<u8>(last, target, self.item_layout.size());
+        }
         // Invalidate the data stored in the last row, as it has been moved
         self.len -= 1;
     }
@@ -382,9 +402,11 @@ impl BlobVec {
     pub unsafe fn swap_remove_and_drop_unchecked(&mut self, index: usize) {
         debug_assert!(index < self.len());
         let drop = self.drop;
-        let value = self.swap_remove_and_forget_unchecked(index);
+        let value = unsafe { self.swap_remove_and_forget_unchecked(index) };
         if let Some(drop) = drop {
-            drop(value);
+            unsafe {
+                drop(value);
+            }
         }
     }
 
@@ -401,7 +423,7 @@ impl BlobVec {
         //   so this operation will not overflow the original allocation.
         // - `size` is a multiple of the erased type's alignment,
         //  so adding a multiple of `size` will preserve alignment.
-        self.get_ptr().byte_add(index * size)
+        unsafe { self.get_ptr().byte_add(index * size) }
     }
 
     /// Returns a mutable reference to the element at `index`, without doing bounds checking.
@@ -417,7 +439,7 @@ impl BlobVec {
         //   so this operation will not overflow the original allocation.
         // - `size` is a multiple of the erased type's alignment,
         //  so adding a multiple of `size` will preserve alignment.
-        self.get_ptr_mut().byte_add(index * size)
+        unsafe { self.get_ptr_mut().byte_add(index * size) }
     }
 
     /// Gets a [`Ptr`] to the start of the vec
@@ -440,7 +462,7 @@ impl BlobVec {
     /// The type `T` must be the type of the items in this [`BlobVec`].
     pub unsafe fn get_slice<T>(&self) -> &[UnsafeCell<T>] {
         // SAFETY: the inner data will remain valid for as long as 'self.
-        std::slice::from_raw_parts(self.data.as_ptr() as *const UnsafeCell<T>, self.len)
+        unsafe { std::slice::from_raw_parts(self.data.as_ptr() as *const UnsafeCell<T>, self.len) }
     }
 
     /// Clears the vector, removing (and dropping) all values.

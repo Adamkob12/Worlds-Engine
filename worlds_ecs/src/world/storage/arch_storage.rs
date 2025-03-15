@@ -167,8 +167,8 @@ impl ArchStorage {
             .get_mut_unchecked(index.0)
     }
 
-    /// Iterate over all of the indicies in this storage.
-    pub fn iter_indices(&self) -> impl Iterator<Item = ArchStorageIndex> {
+    /// Iterate over all the indices in this storage.
+    pub fn iter_indices(&self) -> impl Iterator<Item = ArchStorageIndex> + use<> {
         (0..self.len()).map(|i| ArchStorageIndex(i))
     }
 

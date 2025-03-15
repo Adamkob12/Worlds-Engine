@@ -1,31 +1,31 @@
 use crate::world::storage::{arch_storage::ArchStorageIndex, storages::ArchStorageId};
 use std::collections::VecDeque;
 
-/// A unique identifer for an entity in the in the [`World`](crate::world::World)
+/// A unique identifier for an entity in the [`World`](crate::world::World)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EntityId {
     id: u32,
-    gen: u32,
+    generation: u32,
 }
 
 impl EntityId {
     fn new(id: u32) -> EntityId {
-        EntityId { id, gen: 0 }
+        EntityId { id, generation: 0 }
     }
 
-    /// The unique Id of this entity.
+    /// The unique ID of this entity.
     pub fn id(&self) -> u32 {
         self.id
     }
 
     /// The generation of this entity.
     pub fn generation(&self) -> u32 {
-        self.gen
+        self.generation
     }
 
     /// With generation
-    pub fn with_generation(mut self, gen: u32) -> EntityId {
-        self.gen = gen;
+    pub fn with_generation(mut self, generation: u32) -> EntityId {
+        self.generation = generation;
         self
     }
 }
@@ -40,7 +40,7 @@ pub struct EntityFactory {
     /// entity that this [`EntityFactory`] will produce with have the same id as the [`EntityId`] in the head of this
     /// queue, with a greater generation. If the queue is empty, this [`EntityFactory`] will allocate a new entity with
     /// a new unique [`EntityId`].
-    queued_entitys: VecDeque<EntityId>,
+    queued_entities: VecDeque<EntityId>,
     /// Meta-data of entities. Indexed by [`EntityId::id`].
     entity_metas: Vec<EntityMeta>,
     /// Number of registered entities, also the length of [`Self::entity_metas`] & [`Self::generations`].
@@ -62,7 +62,7 @@ impl EntityFactory {
     /// & [`Self::new_entity`] because this will only use the [`EntityId`] of an entity that was removed.
     /// Panics if the maximum amount of entities has been reached (2^32).
     fn revive_removed_entity(&mut self, entity_meta: EntityMeta) -> Option<EntityId> {
-        let id = self.queued_entitys.pop_front()?;
+        let id = self.queued_entities.pop_front()?;
         let entity = id.with_generation(self.generations[id.id() as usize]);
         self.set_entity_meta(entity_meta, entity);
         Some(entity)
@@ -79,7 +79,7 @@ impl EntityFactory {
 
     /// Verify the generation of this entity, meaning, verify that it hasn't been removed.
     pub fn verify_generation(&self, entity: EntityId) -> bool {
-        self.generations[entity.id() as usize] == entity.gen
+        self.generations[entity.id() as usize] == entity.generation
     }
 
     /// remove an entity. This will increment the generation matching this entity's [`id`](EntityId::id).
@@ -91,10 +91,10 @@ impl EntityFactory {
         );
         self.generations[entity.id() as usize] += 1;
         self.entities -= 1;
-        self.queued_entitys.push_back(entity)
+        self.queued_entities.push_back(entity)
     }
 
-    /// The the [`EntityMeta`] of an entity, with generation-verification.
+    /// The [`EntityMeta`] of an entity, with generation-verification.
     pub fn get_entity_meta(&self, entity: EntityId) -> Option<&EntityMeta> {
         self.verify_generation(entity)
             .then(|| &self.entity_metas[entity.id() as usize])
